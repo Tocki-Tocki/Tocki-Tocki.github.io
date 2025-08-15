@@ -35,34 +35,28 @@
     </div>
 
     <div class="container mx-auto p-4 md:p-8">
-        <!-- ÁREA DE PERFIL DE USUARIO (se muestra cuando es necesario) -->
         <div id="user-profile-area" class="mb-6"></div>
 
-        <!-- VISTA DE GALERÍA DE SUBASTAS -->
         <div id="lobby-view" class="hidden">
             <header class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Subastas Activas</h1>
                 <p class="text-gray-600 mt-2">Explora los productos y haz tu mejor oferta.</p>
             </header>
             <div id="auction-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Las tarjetas de subasta se insertarán aquí -->
-            </div>
+                </div>
         </div>
 
-        <!-- VISTA DE DETALLE DE SUBASTA (oculta por defecto) -->
         <div id="detail-view" class="hidden">
             <button id="back-to-lobby-btn" class="mb-6 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
                 &larr; Volver a todas las subastas
             </button>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Columna del Producto -->
                 <div class="bg-white p-6 rounded-xl shadow-lg">
                     <img id="product-image" src="https://placehold.co/600x400/3498db/ffffff?text=Producto" alt="Imagen del Producto" class="w-full h-auto object-cover rounded-lg mb-4">
                     <h2 id="product-name" class="text-3xl font-bold mb-2"></h2>
                     <p id="product-description" class="text-gray-600"></p>
                 </div>
 
-                <!-- Columna de la Subasta -->
                 <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col">
                     <div id="auction-status-banner" class="p-4 rounded-lg text-center mb-4"></div>
                     <div class="grid grid-cols-2 gap-4 mb-4 text-center">
@@ -76,8 +70,8 @@
                         </div>
                     </div>
                     <div class="mb-4 text-center">
-                         <p class="text-sm text-gray-500">Oferta más alta por:</p>
-                         <p id="highest-bidder" class="font-semibold text-lg text-gray-800 truncate"></p>
+                           <p class="text-sm text-gray-500">Oferta más alta por:</p>
+                           <p id="highest-bidder" class="font-semibold text-lg text-gray-800 truncate"></p>
                     </div>
                     <form id="bid-form" class="space-y-4">
                         <div>
@@ -102,20 +96,20 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
 
         // --- CONFIGURACIÓN DE TU FIREBASE ---
         const firebaseConfig = {
-            apiKey: "AIzaSyA1fmOAheqSQ37aSZOW5uSbuaKjwfU7wI4",
-            authDomain: "momi-b914a.firebaseapp.com",
-            databaseURL: "https://momi-b914a-default-rtdb.firebaseio.com",
-            projectId: "momi-b914a",
-            storageBucket: "momi-b914a.appspot.com",
-            messagingSenderId: "304210880273",
-            appId: "1:304210880273:web:876d2e5179a17c00080eb0",
-            measurementId: "G-GSBEB9VG4X"
+            apiKey: "AIzaSyBap76ek_mUzHru0TdvlUd8jIagieOtcOI",
+            authDomain: "tocki-tocki.firebaseapp.com",
+            projectId: "tocki-tocki",
+            storageBucket: "tocki-tocki.firebasestorage.app",
+            messagingSenderId: "246048485007",
+            appId: "1:246048485007:web:e0d57da752570cf73acafa",
+            measurementId: "G-WZQB1M3JD6"
         };
 
         // --- CONFIGURACIÓN DE PRODUCTOS PARA SUBASTAR (Máximo 12) ---
@@ -347,7 +341,7 @@ service cloud.firestore {
                     }
                 });
             } catch (error) {
-                 if (error.code === 'permission-denied') {
+                if (error.code === 'permission-denied') {
                     handlePermissionError();
                 } else {
                     console.error("Error al cargar lobby:", error);
@@ -503,30 +497,24 @@ service cloud.firestore {
                 if (timeLeft <= 0 || data.status === 'ended') {
                     clearInterval(countdownIntervals[timerId]);
                     countdownTimerEl.textContent = "Finalizada";
-                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white">Subasta Terminada</h3><p class="text-white">Ganador: <strong class="font-semibold">${data.highestBidder.nickname}</strong></p>`;
-                    auctionStatusBanner.className = 'p-4 rounded-lg text-center mb-4 bg-red-600';
-                    submitBidBtn.disabled = true;
-                    bidAmountInput.disabled = true;
-                    if (data.status === 'active' && data.highestBidder.uid) {
-                        const auctionRef = doc(db, "auctions", data.productId);
-                        updateDoc(auctionRef, { status: 'ended' });
+                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white bg-red-600 p-4 rounded-lg">¡SUBASTA FINALIZADA!</h3>`;
+                    bidForm.style.display = 'none';
+                    if (currentUser && data.highestBidder.uid === currentUser.uid) {
+                        auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white bg-green-600 p-4 rounded-lg">¡GANASTE LA SUBASTA!</h3><p class="text-sm text-white mt-2">Pronto nos contactaremos contigo.</p>`;
                     }
                 } else {
                     const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
                     const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
                     const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
                     countdownTimerEl.textContent = `${h}:${m}:${s}`;
-                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white">¡Subasta en curso!</h3>`;
-                    auctionStatusBanner.className = 'p-4 rounded-lg text-center mb-4 bg-green-600';
-                    submitBidBtn.disabled = false;
-                    bidAmountInput.disabled = false;
+                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white bg-green-600 p-4 rounded-lg">¡SUBASTA ACTIVA!</h3>`;
+                    bidForm.style.display = 'block';
                 }
             }
             update();
             countdownIntervals[timerId] = setInterval(update, 1000);
         }
 
-        // --- INICIAR LA APLICACIÓN ---
         main();
     </script>
 </body>
