@@ -35,28 +35,34 @@
     </div>
 
     <div class="container mx-auto p-4 md:p-8">
+        <!-- ÁREA DE PERFIL DE USUARIO (se muestra cuando es necesario) -->
         <div id="user-profile-area" class="mb-6"></div>
 
+        <!-- VISTA DE GALERÍA DE SUBASTAS -->
         <div id="lobby-view" class="hidden">
             <header class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Subastas Activas</h1>
                 <p class="text-gray-600 mt-2">Explora los productos y haz tu mejor oferta.</p>
             </header>
             <div id="auction-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                </div>
+                <!-- Las tarjetas de subasta se insertarán aquí -->
+            </div>
         </div>
 
+        <!-- VISTA DE DETALLE DE SUBASTA (oculta por defecto) -->
         <div id="detail-view" class="hidden">
             <button id="back-to-lobby-btn" class="mb-6 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
                 &larr; Volver a todas las subastas
             </button>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Columna del Producto -->
                 <div class="bg-white p-6 rounded-xl shadow-lg">
                     <img id="product-image" src="https://placehold.co/600x400/3498db/ffffff?text=Producto" alt="Imagen del Producto" class="w-full h-auto object-cover rounded-lg mb-4">
                     <h2 id="product-name" class="text-3xl font-bold mb-2"></h2>
                     <p id="product-description" class="text-gray-600"></p>
                 </div>
 
+                <!-- Columna de la Subasta -->
                 <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col">
                     <div id="auction-status-banner" class="p-4 rounded-lg text-center mb-4"></div>
                     <div class="grid grid-cols-2 gap-4 mb-4 text-center">
@@ -70,8 +76,9 @@
                         </div>
                     </div>
                     <div class="mb-4 text-center">
-                           <p class="text-sm text-gray-500">Oferta más alta por:</p>
-                           <p id="highest-bidder" class="font-semibold text-lg text-gray-800 truncate"></p>
+                         <p class="text-sm text-gray-500">Oferta más alta por:</p>
+                         <p id="highest-bidder" class="font-semibold text-lg text-gray-800 truncate"></p>
+                         <div id="withdraw-bid-container" class="mt-2"></div>
                     </div>
                     <form id="bid-form" class="space-y-4">
                         <div>
@@ -81,7 +88,10 @@
                                 <input type="number" id="bid-amount" name="bid-amount" class="w-full pl-7 pr-12 py-3 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00">
                             </div>
                         </div>
-                        <button type="submit" id="submit-bid" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-indigo-700">Realizar Oferta</button>
+                        <div class="flex items-center gap-2">
+                             <button type="submit" id="submit-bid" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-indigo-700">Realizar Oferta</button>
+                             <button type="button" id="quick-bid-btn" class="w-full bg-green-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-green-700 whitespace-nowrap"></button>
+                        </div>
                     </form>
                     <div id="message-box" class="mt-4 text-center text-sm font-medium"></div>
                     <div class="mt-6 flex-grow">
@@ -96,13 +106,12 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE TU FIREBASE ---
-        const firebaseConfig = {
+      const firebaseConfig = {
             apiKey: "AIzaSyBap76ek_mUzHru0TdvlUd8jIagieOtcOI",
             authDomain: "tocki-tocki.firebaseapp.com",
             projectId: "tocki-tocki",
@@ -110,22 +119,22 @@
             messagingSenderId: "246048485007",
             appId: "1:246048485007:web:e0d57da752570cf73acafa",
             measurementId: "G-WZQB1M3JD6"
-        };
+          };
 
         // --- CONFIGURACIÓN DE PRODUCTOS PARA SUBASTAR (Máximo 12) ---
         const AUCTION_PRODUCTS = [
-            { isActive: true, productId: 'reloj-suizo-02', productName: 'Reloj Suizo de Colección', productDescription: 'Un reloj automático de fabricación suiza con maquinaria visible y correa de cuero genuino.', productImageUrl: 'https://placehold.co/600x400/1abc9c/ffffff?text=Reloj+Suizo', startingBid: 1201, auctionDurationHours: 60 },
-            { isActive: true, productId: 'laptop-gamer-03', productName: 'Laptop Gamer X-Force', productDescription: 'Potente laptop con tarjeta gráfica de última generación, 32GB de RAM y pantalla de 144Hz.', productImageUrl: 'https://placehold.co/600x400/3498db/ffffff?text=Laptop+Gamer', startingBid: 1202, auctionDurationHours: 120 },
-            { isActive: true, productId: 'consola-juegos-04', productName: 'Consola de Videojuegos NextGen', productDescription: 'La última consola del mercado con 1TB de almacenamiento y un control inalámbrico.', productImageUrl: 'https://placehold.co/600x400/9b59b6/ffffff?text=Consola', startingBid: 451, auctionDurationHours: 800 },
-            { isActive: true, productId: 'camara-profesional-05', productName: 'Cámara Profesional Mirrorless', productDescription: 'Cámara con sensor Full-Frame de 42MP, grabación en 4K y estabilización de 5 ejes.', productImageUrl: 'https://placehold.co/600x400/e74c3c/ffffff?text=Cámara', startingBid: 1801, auctionDurationHours: 1000 },
-            { isActive: false, productId: 'slot-05', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+5', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-06', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+6', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-07', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+7', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-08', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+8', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-09', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+9', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-10', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+10', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-11', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+11', startingBid: 0, auctionDurationHours: 1 },
-            { isActive: false, productId: 'slot-12', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+12', startingBid: 0, auctionDurationHours: 1 },
+            { isActive: true, productId: 'reloj-suizo-01', productName: 'Reloj Suizo de Colección', productDescription: 'Un reloj automático de fabricación suiza con maquinaria visible y correa de cuero genuino.', productImageUrl: 'https://placehold.co/600x400/1abc9c/ffffff?text=Reloj+Suizo', startingBid: 500, auctionDurationHours: 12, minIncrement: 50 },
+            { isActive: true, productId: 'laptop-gamer-02', productName: 'Laptop Gamer X-Force', productDescription: 'Potente laptop con tarjeta gráfica de última generación, 32GB de RAM y pantalla de 144Hz.', productImageUrl: 'https://placehold.co/600x400/3498db/ffffff?text=Laptop+Gamer', startingBid: 1200, auctionDurationHours: 24, minIncrement: 100 },
+            { isActive: true, productId: 'consola-juegos-03', productName: 'Consola de Videojuegos NextGen', productDescription: 'La última consola del mercado con 1TB de almacenamiento y un control inalámbrico.', productImageUrl: 'https://placehold.co/600x400/9b59b6/ffffff?text=Consola', startingBid: 450, auctionDurationHours: 8, minIncrement: 25 },
+            { isActive: true, productId: 'camara-profesional-04', productName: 'Cámara Profesional Mirrorless', productDescription: 'Cámara con sensor Full-Frame de 42MP, grabación en 4K y estabilización de 5 ejes.', productImageUrl: 'https://placehold.co/600x400/e74c3c/ffffff?text=Cámara', startingBid: 1800, auctionDurationHours: 48, minIncrement: 150 },
+            { isActive: false, productId: 'slot-05', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+5', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-06', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+6', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-07', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+7', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-08', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+8', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-09', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+9', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-10', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+10', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-11', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+11', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+            { isActive: false, productId: 'slot-12', productName: 'Producto Desactivado', productDescription: '', productImageUrl: 'https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+12', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
         ];
 
         // --- ELEMENTOS DEL DOM ---
@@ -135,12 +144,13 @@
         const auctionList = document.getElementById('auction-list');
         const detailView = document.getElementById('detail-view');
         const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
-        const productNameEl = document.getElementById('product-name'), productDescriptionEl = document.getElementById('product-description'), productImageEl = document.getElementById('product-image'), currentBidEl = document.getElementById('current-bid'), highestBidderEl = document.getElementById('highest-bidder'), countdownTimerEl = document.getElementById('countdown-timer'), bidForm = document.getElementById('bid-form'), bidAmountInput = document.getElementById('bid-amount'), submitBidBtn = document.getElementById('submit-bid'), bidHistoryEl = document.getElementById('bid-history'), messageBox = document.getElementById('message-box'), auctionStatusBanner = document.getElementById('auction-status-banner');
+        const productNameEl = document.getElementById('product-name'), productDescriptionEl = document.getElementById('product-description'), productImageEl = document.getElementById('product-image'), currentBidEl = document.getElementById('current-bid'), highestBidderEl = document.getElementById('highest-bidder'), countdownTimerEl = document.getElementById('countdown-timer'), bidForm = document.getElementById('bid-form'), bidAmountInput = document.getElementById('bid-amount'), submitBidBtn = document.getElementById('submit-bid'), quickBidBtn = document.getElementById('quick-bid-btn'), bidHistoryEl = document.getElementById('bid-history'), messageBox = document.getElementById('message-box'), auctionStatusBanner = document.getElementById('auction-status-banner'), withdrawBidContainer = document.getElementById('withdraw-bid-container');
 
         // --- VARIABLES GLOBALES ---
         let db, auth;
         let currentUser = null, userProfile = null;
         let currentAuctionId = null;
+        let currentAuctionData = null;
         let countdownIntervals = {};
 
         // --- INICIALIZACIÓN ---
@@ -150,6 +160,7 @@
             auth = getAuth(app);
             backToLobbyBtn.addEventListener('click', showLobbyView);
             bidForm.addEventListener('submit', handleBidSubmit);
+            quickBidBtn.addEventListener('click', handleQuickBid);
             onAuthStateChanged(auth, handleAuthStateChange);
         }
 
@@ -297,7 +308,7 @@ service cloud.firestore {
 
         function renderUserProfile() {
             userProfileArea.innerHTML = `<div class="bg-white p-3 rounded-lg shadow-sm border flex justify-between items-center"><p>Bienvenido, <strong class="font-semibold">${userProfile.nickname}</strong></p><button id="logout-btn" class="text-sm text-indigo-600 hover:underline">Cerrar Sesión</button></div>`;
-            document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+            document.getElementById('logout-btn').addEventListener('click', () => auth.signOut().then(() => window.location.reload()));
             lobbyView.classList.remove('hidden');
         }
 
@@ -306,6 +317,7 @@ service cloud.firestore {
             detailView.classList.add('hidden');
             lobbyView.classList.remove('hidden');
             currentAuctionId = null;
+            currentAuctionData = null;
             document.title = 'Plataforma de Subastas';
         }
 
@@ -318,7 +330,8 @@ service cloud.firestore {
             const auctionRef = doc(db, "auctions", productId);
             onSnapshot(auctionRef, (doc) => {
                 if(currentAuctionId === productId && doc.exists()) {
-                    updateDetailViewUI(doc.data());
+                    currentAuctionData = doc.data();
+                    updateDetailViewUI(currentAuctionData);
                 }
             });
         }
@@ -336,15 +349,11 @@ service cloud.firestore {
                 }, (error) => {
                     if (error.code === 'permission-denied') {
                         handlePermissionError();
-                    } else {
-                        console.error("Error en listener de subastas:", error);
                     }
                 });
             } catch (error) {
-                if (error.code === 'permission-denied') {
+                 if (error.code === 'permission-denied') {
                     handlePermissionError();
-                } else {
-                    console.error("Error al cargar lobby:", error);
                 }
             }
         }
@@ -379,7 +388,7 @@ service cloud.firestore {
                 card.innerHTML = `<img src="${auction.productImageUrl}" alt="${auction.productName}" class="w-full h-48 object-cover"><div class="p-4"><h3 class="text-xl font-bold text-gray-900 truncate">${auction.productName}</h3><div class="mt-4 flex justify-between items-center"><div><p class="text-sm text-gray-500">Oferta actual</p><p id="${bidId}" class="text-2xl font-bold text-green-600">$${auction.currentBid.toLocaleString()}</p></div><div><p class="text-sm text-gray-500 text-right">Termina en</p><p id="${timeId}" class="text-xl font-bold text-red-600">--:--:--</p></div></div></div>`;
                 auctionList.appendChild(card);
                 card.addEventListener('click', () => showDetailView(auction.id));
-                document.getElementById(bidId).textContent = `$${auction.currentBid.toLocaleString()}`;
+                document.getElementById(bidId).textContent = formatBid(auction.currentBid);
                 updateCardTimer(timeId, auction.endTime, auction.status);
             });
         }
@@ -406,35 +415,70 @@ service cloud.firestore {
         }
 
         // --- LÓGICA DE LA VISTA DE DETALLE ---
+        function formatBid(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            }
+            if (num >= 100000) {
+                return (num / 1000).toFixed(0) + 'k';
+            }
+            return num.toLocaleString('es-CO');
+        }
+
         function updateDetailViewUI(data) {
             document.title = data.productName;
             productNameEl.textContent = data.productName;
             productDescriptionEl.textContent = data.productDescription;
             productImageEl.src = data.productImageUrl;
-            currentBidEl.textContent = `$${data.currentBid.toLocaleString()}`;
+            currentBidEl.textContent = `$${formatBid(data.currentBid)}`;
             highestBidderEl.textContent = data.highestBidder.nickname;
+            
+            withdrawBidContainer.innerHTML = '';
             if (currentUser && data.highestBidder.uid === currentUser.uid) {
                 highestBidderEl.innerHTML += ' <span class="text-green-600 font-semibold">(¡Eres tú!)</span>';
+                const withdrawBtn = document.createElement('button');
+                withdrawBtn.id = 'withdraw-btn';
+                withdrawBtn.className = 'text-xs text-red-500 hover:underline';
+                withdrawBtn.textContent = 'Retirar mi oferta';
+                withdrawBtn.onclick = handleWithdrawBid;
+                withdrawBidContainer.appendChild(withdrawBtn);
             }
-            bidAmountInput.placeholder = `Mayor a $${data.currentBid}`;
+
+            const nextBid = data.currentBid + data.minIncrement;
+            bidAmountInput.placeholder = `Mínimo $${nextBid.toLocaleString()}`;
+            quickBidBtn.textContent = `Ofertar $${nextBid.toLocaleString()}`;
+
             renderBidHistory(data.bids);
             handleAuctionStatus(data);
         }
         
         async function handleBidSubmit(e) {
             e.preventDefault();
-            if (!userProfile) return;
+            const bidAmount = parseFloat(bidAmountInput.value);
+            await placeBid(bidAmount);
+        }
+
+        async function handleQuickBid() {
+            if (!currentAuctionData) return;
+            const quickBidAmount = currentAuctionData.currentBid + currentAuctionData.minIncrement;
+            await placeBid(quickBidAmount);
+        }
+
+        async function placeBid(newBidAmount) {
+             if (!userProfile) return;
             submitBidBtn.disabled = true;
+            quickBidBtn.disabled = true;
             submitBidBtn.textContent = 'Procesando...';
             messageBox.textContent = '';
-            const newBidAmount = parseFloat(bidAmountInput.value);
             const auctionRef = doc(db, "auctions", currentAuctionId);
 
             try {
                 const auctionDoc = await getDoc(auctionRef);
                 const data = auctionDoc.data();
                 if (data.status === 'ended') throw new Error("La subasta ya ha terminado.");
-                if (isNaN(newBidAmount) || newBidAmount <= data.currentBid) throw new Error(`Tu oferta debe ser mayor a $${data.currentBid.toLocaleString()}.`);
+                if (isNaN(newBidAmount) || newBidAmount < data.currentBid + data.minIncrement) {
+                    throw new Error(`Tu oferta debe ser de al menos $${(data.currentBid + data.minIncrement).toLocaleString()}.`);
+                }
 
                 const updatePayload = {
                     currentBid: newBidAmount,
@@ -450,7 +494,7 @@ service cloud.firestore {
 
                 const timeLeft = new Date(data.endTime) - new Date();
                 if (timeLeft < 60000) { // Menos de 60 segundos
-                    const newEndTime = new Date(new Date(data.endTime).getTime() + 22 * 1000);
+                    const newEndTime = new Date(new Date().getTime() + 22 * 1000);
                     updatePayload.endTime = newEndTime.toISOString();
                     messageBox.textContent = '¡Tiempo extendido 22 segundos!';
                     messageBox.className = 'mt-4 text-center text-sm font-medium text-orange-500';
@@ -468,7 +512,53 @@ service cloud.firestore {
                 messageBox.className = 'mt-4 text-center text-sm font-medium text-red-600';
             } finally {
                 submitBidBtn.disabled = false;
+                quickBidBtn.disabled = false;
                 submitBidBtn.textContent = 'Realizar Oferta';
+            }
+        }
+
+        async function handleWithdrawBid() {
+            const withdrawBtn = document.getElementById('withdraw-btn');
+            if(withdrawBtn) {
+                withdrawBtn.disabled = true;
+                withdrawBtn.textContent = 'Retirando...';
+            }
+
+            const auctionRef = doc(db, "auctions", currentAuctionId);
+            try {
+                const auctionDoc = await getDoc(auctionRef);
+                let data = auctionDoc.data();
+
+                if (data.highestBidder.uid !== currentUser.uid) {
+                    throw new Error("Ya no eres el mayor postor.");
+                }
+
+                // Crea una nueva lista de pujas excluyendo TODAS las del usuario actual
+                const remainingBids = data.bids.filter(b => b.uid !== currentUser.uid);
+
+                if (remainingBids.length === 0) {
+                    // Si no quedan otras pujas, reiniciar la subasta
+                    await updateDoc(auctionRef, {
+                        bids: [],
+                        currentBid: data.startingBid,
+                        highestBidder: { nickname: 'Nadie aún', uid: null }
+                    });
+                } else {
+                    // Si quedan pujas, encontrar la nueva más alta
+                    const sortedBids = remainingBids.sort((a, b) => b.amount - a.amount);
+                    const newHighestBid = sortedBids[0];
+                    
+                    await updateDoc(auctionRef, {
+                        bids: remainingBids,
+                        currentBid: newHighestBid.amount,
+                        highestBidder: { nickname: newHighestBid.nickname, uid: newHighestBid.uid }
+                    });
+                }
+                 messageBox.textContent = 'Tu oferta ha sido retirada con éxito.';
+                 messageBox.className = 'mt-4 text-center text-sm font-medium text-green-600';
+            } catch (error) {
+                messageBox.textContent = `Error al retirar: ${error.message}`;
+                messageBox.className = 'mt-4 text-center text-sm font-medium text-red-600';
             }
         }
         
@@ -497,24 +587,32 @@ service cloud.firestore {
                 if (timeLeft <= 0 || data.status === 'ended') {
                     clearInterval(countdownIntervals[timerId]);
                     countdownTimerEl.textContent = "Finalizada";
-                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white bg-red-600 p-4 rounded-lg">¡SUBASTA FINALIZADA!</h3>`;
-                    bidForm.style.display = 'none';
-                    if (currentUser && data.highestBidder.uid === currentUser.uid) {
-                        auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white bg-green-600 p-4 rounded-lg">¡GANASTE LA SUBASTA!</h3><p class="text-sm text-white mt-2">Pronto nos contactaremos contigo.</p>`;
+                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white">Subasta Terminada</h3><p class="text-white">Ganador: <strong class="font-semibold">${data.highestBidder.nickname}</strong></p>`;
+                    auctionStatusBanner.className = 'p-4 rounded-lg text-center mb-4 bg-red-600';
+                    submitBidBtn.disabled = true;
+                    quickBidBtn.disabled = true;
+                    bidAmountInput.disabled = true;
+                    if (data.status === 'active' && data.highestBidder.uid) {
+                        const auctionRef = doc(db, "auctions", data.productId);
+                        updateDoc(auctionRef, { status: 'ended' });
                     }
                 } else {
                     const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
                     const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
                     const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
                     countdownTimerEl.textContent = `${h}:${m}:${s}`;
-                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white bg-green-600 p-4 rounded-lg">¡SUBASTA ACTIVA!</h3>`;
-                    bidForm.style.display = 'block';
+                    auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white">¡Subasta en curso!</h3>`;
+                    auctionStatusBanner.className = 'p-4 rounded-lg text-center mb-4 bg-green-600';
+                    submitBidBtn.disabled = false;
+                    quickBidBtn.disabled = false;
+                    bidAmountInput.disabled = false;
                 }
             }
             update();
             countdownIntervals[timerId] = setInterval(update, 1000);
         }
 
+        // --- INICIAR LA APLICACIÓN ---
         main();
     </script>
 </body>
