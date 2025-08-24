@@ -14,7 +14,7 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
     .thumbnail.active { border-color: #4f46e5; opacity: 1; }
-    /* Garantizar 1:1 en cualquier miniatura/imagen cuadrada */
+    /* 1:1 helpers */
     .square { aspect-ratio: 1 / 1; object-fit: cover; }
   </style>
 </head>
@@ -47,7 +47,7 @@
         <div class="bg-white p-6 rounded-xl shadow-lg">
           <div id="carousel-container" class="relative w-full">
             <div id="main-image-container" class="mb-2 rounded-lg overflow-hidden">
-              <img id="product-image" src="https://placehold.co/600x400/3498db/ffffff?text=Producto" alt="Imagen del Producto" class="w-full h-80 object-cover transition-transform duration-300 ease-in-out">
+              <img id="product-image" src="https://placehold.co/600x600/3498db/ffffff?text=Producto" alt="Imagen del Producto" class="w-full aspect-square object-cover transition-transform duration-300 ease-in-out">
             </div>
             <button id="prev-btn" class="absolute top-1/2 left-2 -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 transition-opacity">&lt;</button>
             <button id="next-btn" class="absolute top-1/2 right-2 -translate-y-1/2 bg-black bg-opacity-40 text-white p-2 rounded-full hover:bg-opacity-60 transition-opacity">&gt;</button>
@@ -125,6 +125,12 @@
       'mtrx-25000puff-frambuesa-azul': ['./mtrx-blue-razz.jpg'],
       'mtrx-25000puff-mora-airhead': ['./mtrx-blueberry-airhead.jpg'],
       'rude-boy-cera-brillante': ['./rude-boy-cera-brillante-1.jpg', './rude-boy-cera-brillante-2.jpg'],
+      // Slots (si se usan) pueden tener placeholder cuadrado:
+      'slot-08': ['https://placehold.co/600x600/bdc3c7/ffffff?text=Slot+8'],
+      'slot-09': ['https://placehold.co/600x600/bdc3c7/ffffff?text=Slot+9'],
+      'slot-10': ['https://placehold.co/600x600/bdc3c7/ffffff?text=Slot+10'],
+      'slot-11': ['https://placehold.co/600x600/bdc3c7/ffffff?text=Slot+11'],
+      'slot-12': ['https://placehold.co/600x600/bdc3c7/ffffff?text=Slot+12'],
     };
 
     // --- PRODUCTOS (en orden) ---
@@ -133,14 +139,14 @@
         isActive: true,
         productId: 'smartwatch-01',
         productName: 'Reloj Smart Watch',
-        productDescription: 'Reloj inteligente genérico ideal para el día a día. Seguimiento de pasos, calorías y ritmo cardíaco. Notificaciones por Bluetooth con Android/iOS. Resistente a salpicaduras y batería recargable de buena duración.',
+        productDescription: 'Reloj inteligente genérico ideal para el día a día. Seguimiento de pasos, calorías y ritmo cardíaco. Notificaciones por Bluetooth con Android/iOS. Resistente a salpicaduras y batería recargable.',
         startingBid: 50000, auctionDurationHours: 360, minIncrement: 5000
       },
       {
         isActive: true,
         productId: 'ps5-01',
         productName: 'PlayStation 5 (Solo juegos físicos)',
-        productDescription: 'PS5 FAT con lector de discos. Baneada de PSN: no online ni tienda digital. Funciona perfecto con juegos en disco (offline). Incluye 1 control DualSense, cables y garantía de 30 días.',
+        productDescription: 'PS5 FAT con lector de discos. Baneada de PSN: no online ni tienda digital. Funciona perfecto con juegos en disco. Incluye 1 control DualSense, cables y garantía de 30 días.',
         startingBid: 1100000, auctionDurationHours: 360, minIncrement: 15000
       },
       {
@@ -175,10 +181,10 @@
         isActive: true,
         productId: 'rude-boy-cera-brillante',
         productName: 'Cera Rude Boy Brillante (Fijación Fuerte)',
-        productDescription: 'Cera base agua de fijación fuerte y acabado brillante. Fácil de aplicar y retirar, sin residuos grasos. Ideal para peinados definidos con efecto húmedo (uso diario o profesional).',
+        productDescription: 'Cera base agua de fijación fuerte y acabado brillante. Fácil de aplicar y retirar, sin residuos grasos. Ideal para peinados definidos con efecto húmedo.',
         startingBid: 24000, auctionDurationHours: 360, minIncrement: 1000
       },
-      // slots opcionales
+      // Slots opcionales para completar 12
       { isActive: false, productId: 'slot-08', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
       { isActive: false, productId: 'slot-09', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
       { isActive: false, productId: 'slot-10', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
@@ -237,7 +243,7 @@
     window.addEventListener('popstate', (e) => {
       const s = e.state;
       if (s?.view === 'detail' && s.productId) {
-        showDetailView(s.productId);
+        showDetailView(s.productId); // NO push aquí
       } else {
         showLobbyView();
       }
@@ -260,7 +266,7 @@
         db = getFirestore(app);
         auth = getAuth(app);
 
-        // Botón "Volver": usa historial (igual que el botón físico del teléfono)
+        // Botón "Volver": usa historial (igual al botón físico)
         backToLobbyBtn.addEventListener('click', () => history.back());
         bidForm.addEventListener('submit', handleBidSubmit);
         quickBidBtn.addEventListener('click', handleQuickBid);
@@ -323,7 +329,7 @@ service cloud.firestore {
           userProfile = userDoc.data();
           renderUserProfile();
           await loadLobby();
-          applyInitialRoute(); // resolver ruta inicial
+          applyInitialRoute(); // ruta inicial
         } else {
           renderProfileInputForm();
         }
@@ -419,7 +425,7 @@ service cloud.firestore {
       document.getElementById('logout-btn').addEventListener('click', () => auth.signOut().then(() => window.location.reload()));
       lobbyView.classList.remove('hidden');
 
-      // Estado base para que Atrás no cierre de una
+      // Estado base para que el primer "Atrás" no cierre el navegador
       if (!history.state) {
         history.replaceState({ view: 'lobby' }, '', '#lobby');
       }
@@ -445,7 +451,7 @@ service cloud.firestore {
         if (currentAuctionId === productId && docSnap.exists()) {
           const data = docSnap.data();
           if (!currentAuctionData) {
-            const imageUrls = PRODUCT_IMAGES[data.productId] || ['https://placehold.co/600x400/cccccc/ffffff?text=No+Image'];
+            const imageUrls = PRODUCT_IMAGES[data.productId] || ['https://placehold.co/600x600/cccccc/ffffff?text=No+Image'];
             renderCarousel(imageUrls);
           }
           currentAuctionData = data;
@@ -506,7 +512,7 @@ service cloud.firestore {
     }
 
     function renderLobby(auctions) {
-      // Respeta orden
+      // Mantener orden según AUCTION_PRODUCTS
       const orderMap = AUCTION_PRODUCTS.reduce((acc, p, i) => (acc[p.productId] = i, acc), {});
       auctions.sort((a,b) => (orderMap[a.id] ?? 999) - (orderMap[b.id] ?? 999));
 
@@ -516,9 +522,9 @@ service cloud.firestore {
         card.className = 'bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
         card.dataset.id = auction.id;
         const timeId = `time-${auction.id}`, bidId = `bid-${auction.id}`;
-        const imageUrls = PRODUCT_IMAGES[auction.id] || ['https://placehold.co/600x400/cccccc/ffffff?text=No+Image'];
+        const imageUrls = PRODUCT_IMAGES[auction.id] || ['https://placehold.co/600x600/cccccc/ffffff?text=No+Image'];
         card.innerHTML = `
-          <img src="${imageUrls[0]}" alt="${auction.productName}" class="w-full h-48 object-cover">
+          <img src="${imageUrls[0]}" alt="${auction.productName}" class="w-full aspect-square object-cover">
           <div class="p-4">
             <h3 class="text-xl font-bold text-gray-900 truncate">${auction.productName}</h3>
             <div class="mt-4 flex justify-between items-center">
@@ -591,7 +597,6 @@ service cloud.firestore {
     // --- AVATAR SVG (para historial 1:1) ---
     function initialAvatarUrl(name = '') {
       const initials = (name || '?').trim().split(/\s+/).map(p => p[0]?.toUpperCase() || '').slice(0,2).join('') || '?';
-      // Colores base
       const colors = ['#4f46e5','#0ea5e9','#22c55e','#f59e0b','#ef4444','#14b8a6'];
       const color = colors[(initials.charCodeAt(0) + (initials.charCodeAt(1)||0)) % colors.length];
       const svg =
@@ -736,7 +741,7 @@ service cloud.firestore {
       }
     }
 
-    // Historial con imagen 1:1 (avatar por iniciales)
+    // Historial con avatar 1:1
     function renderBidHistory(bids) {
       bidHistoryEl.innerHTML = '<ul class="space-y-2"></ul>';
       if (!bids || bids.length === 0) {
