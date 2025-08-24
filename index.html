@@ -21,9 +21,9 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; margin: 0; 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none; margin: 0;
         }
         input[type=number] { -moz-appearance: textfield; }
         .thumbnail.active {
@@ -181,19 +181,75 @@
         // --- CONFIGURACIÓN DE PRODUCTOS PARA SUBASTAR (EN ORDEN DE PRIORIDAD) ---
         const AUCTION_PRODUCTS = [
             // 1) Smart Watch primero
-            { isActive: true, productId: 'smartwatch-01', productName: 'Reloj Smart Watch', productDescription: 'Reloj inteligente con monitoreo de actividad y notificaciones.', startingBid: 50000, auctionDurationHours: 24, minIncrement: 5000 },
+            {
+                isActive: true,
+                productId: 'smartwatch-01',
+                productName: 'Reloj Smart Watch',
+                productDescription: 'Reloj inteligente genérico para uso diario: seguimiento básico (pasos, calorías, ritmo cardíaco), notificaciones de llamadas y mensajes vía Bluetooth con Android/iOS. Resistente a salpicaduras (no sumergible) y batería recargable de buena duración.',
+                startingBid: 50000,
+                auctionDurationHours: 24,
+                minIncrement: 5000
+            },
 
             // 2) PlayStation 5
-            { isActive: true, productId: 'ps5-01', productName: 'PlayStation 5', productDescription: 'Consola de última generación con gráficos 4K y mando DualSense.', startingBid: 1100000, auctionDurationHours: 24, minIncrement: 15000 },
+            {
+                isActive: true,
+                productId: 'ps5-01',
+                productName: 'PlayStation 5 (Baneada de PSN – Solo juegos físicos)',
+                productDescription: 'Consola PS5 FAT con lector de discos. IMPORTANTE: está baneada de PSN, no accede a juego online ni a la tienda digital. Funciona perfectamente en modo offline con juegos en disco. Incluye 1 control DualSense original, cables y garantía de 30 días.',
+                startingBid: 1100000,
+                auctionDurationHours: 24,
+                minIncrement: 15000
+            },
 
             // 3) Vapers MTRX (encabezados con sabores en español)
-            { isActive: true, productId: 'mtrx-25000puff-manzana-verde-sandia', productName: 'Vaper MTRX 25.000 Puff – Manzana Verde y Sandía', productDescription: 'Sabor intenso y duradero. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
-            { isActive: true, productId: 'mtrx-25000puff-sandia-acida', productName: 'Vaper MTRX 25.000 Puff – Sandía Ácida', productDescription: 'Sabor tipo “Sour Batch”. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
-            { isActive: true, productId: 'mtrx-25000puff-frambuesa-azul', productName: 'Vaper MTRX 25.000 Puff – Frambuesa Azul', productDescription: 'Clásico “Blue Razz”. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
-            { isActive: true, productId: 'mtrx-25000puff-arandano-airhead', productName: 'Vaper MTRX 25.000 Puff – Arándano Airhead', productDescription: 'Sabor dulce a arándano. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
+            {
+                isActive: true,
+                productId: 'mtrx-25000puff-manzana-verde-sandia',
+                productName: 'Vaper MTRX 25.000 Puff – Manzana Verde',
+                productDescription: 'Vaper desechable de alta duración (hasta 25.000 puffs). 5% de nicotina, batería recargable por USB-C. Sellado y nuevo. No se recarga con líquido. Sabor: manzana verde, dulce y fresco.',
+                startingBid: 35000,
+                auctionDurationHours: 24,
+                minIncrement: 2000
+            },
+            {
+                isActive: true,
+                productId: 'mtrx-25000puff-sandia-acida',
+                productName: 'Vaper MTRX 25.000 Puff – Sandía Ácida',
+                productDescription: 'Vaper desechable (hasta 25.000 puffs) con 5% de nicotina y batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor: sandía ácida estilo caramelos.',
+                startingBid: 35000,
+                auctionDurationHours: 24,
+                minIncrement: 2000
+            },
+            {
+                isActive: true,
+                productId: 'mtrx-25000puff-frambuesa-azul',
+                productName: 'Vaper MTRX 25.000 Puff – Frambuesa Azul',
+                productDescription: 'Vaper desechable (hasta 25.000 puffs) 5% nicotina, batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor: frambuesa azul, afrutado con toque ácido.',
+                startingBid: 35000,
+                auctionDurationHours: 24,
+                minIncrement: 2000
+            },
+            {
+                isActive: true,
+                productId: 'mtrx-25000puff-arandano-airhead',
+                productName: 'Vaper MTRX 25.000 Puff – Mora (estilo Airhead)',
+                productDescription: 'Vaper desechable (hasta 25.000 puffs) 5% nicotina, batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor: mora dulce tipo Airhead con leve acidez.',
+                startingBid: 35000,
+                auctionDurationHours: 24,
+                minIncrement: 2000
+            },
 
             // 4) Cera Rude Boy
-            { isActive: true, productId: 'rude-boy-cera-brillante', productName: 'Cera de Cabello Rude Boy – Brillante', productDescription: 'Fijación y brillo para peinados definidos.', startingBid: 24000, auctionDurationHours: 24, minIncrement: 1000 },
+            {
+                isActive: true,
+                productId: 'rude-boy-cera-brillante',
+                productName: 'Cera de Cabello Rude Boy – Brillante (Fijación Fuerte)',
+                productDescription: 'Cera capilar de fijación fuerte y acabado brillante. Base agua: fácil de aplicar y retirar, sin residuos grasos. Ideal para peinados definidos con efecto húmedo, uso profesional o diario. Aplicación: una pequeña cantidad en cabello seco o ligeramente húmedo y moldear.',
+                startingBid: 24000,
+                auctionDurationHours: 24,
+                minIncrement: 1000
+            },
 
             // Desactivados por ahora
             { isActive: false, productId: 'slot-05', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
@@ -319,9 +375,9 @@ service cloud.firestore {
                 }
             }
         }
-        
+
         function renderProfileInputForm() {
-            userProfileArea.innerHTML = `<div id="profile-modal" class="bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md shadow-lg"><h3 class="font-bold text-lg">Crea tu Perfil para Participar</h3><p class="mb-3">Tu Nickname será tu identificador público en las subastas.</p><form id="profile-form" class="space-y-3"><div><label for="name-input" class="block text-sm font-medium">Nombre Completo</label><input type="text" id="name-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="cedula-input" class="block text-sm font-medium">Cédula</label><input type="number" id="cedula-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="phone-input" class="block text-sm font-medium">Número de Teléfono</label><input type="tel" id="phone-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="nickname-input" class="block text-sm font-medium">Nickname (único)</label><input type="text" id="nickname-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><button type="submit" id="profile-submit-btn" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md">Crear Perfil</button></form><div id="profile-error" class="text-red-600 text-sm mt-2 font-semibold"></div></div>`;
+            userProfileArea.innerHTML = `<div id="profile-modal" class="bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md shadow-lg"><h3 class="font-bold text-lg">Crea tu Perfil para Participar</h3><p class="mb-3">Tu Nickname será tu identificador público en las subastas.</p><form id="profile-form" class="space-y-3"><div><label for="name-input" class="block text-sm font-medium">Nombre Completo</label><input type="text" id="name-input" required class="mt-1 w/full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="cedula-input" class="block text-sm font-medium">Cédula</label><input type="number" id="cedula-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="phone-input" class="block text-sm font-medium">Número de Teléfono</label><input type="tel" id="phone-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="nickname-input" class="block text-sm font-medium">Nickname (único)</label><input type="text" id="nickname-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div><button type="submit" id="profile-submit-btn" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md">Crear Perfil</button></form><div id="profile-error" class="text-red-600 text-sm mt-2 font-semibold"></div></div>`;
             document.getElementById('profile-form').addEventListener('submit', saveUserProfile);
             loadingOverlay.style.display = 'none';
         }
@@ -350,13 +406,13 @@ service cloud.firestore {
                 if (!querySnapshot.empty) {
                     throw new Error('Este nickname ya está en uso. Por favor, elige otro.');
                 }
-                
-                const newProfile = { 
+
+                const newProfile = {
                     displayName: name,
-                    cedula, 
-                    phone, 
-                    nickname, 
-                    uid: currentUser.uid 
+                    cedula,
+                    phone,
+                    nickname,
+                    uid: currentUser.uid
                 };
                 const usersRef = doc(db, "users", currentUser.uid);
                 await setDoc(usersRef, newProfile);
@@ -401,7 +457,7 @@ service cloud.firestore {
             onSnapshot(auctionRef, (doc) => {
                 if(currentAuctionId === productId && doc.exists()) {
                     const data = doc.data();
-                    if (!currentAuctionData) { // Solo renderizar el carrusel la primera vez
+                    if (!currentAuctionData) {
                         const imageUrls = PRODUCT_IMAGES[data.productId] || ['https://placehold.co/600x400/cccccc/ffffff?text=No+Image'];
                         renderCarousel(imageUrls);
                     }
@@ -559,7 +615,7 @@ service cloud.firestore {
             productDescriptionEl.textContent = data.productDescription;
             currentBidEl.textContent = `$${formatBid(data.currentBid)}`;
             highestBidderEl.textContent = data.highestBidder.nickname;
-            
+
             withdrawBidContainer.innerHTML = '';
             if (currentUser && data.highestBidder.uid === currentUser.uid) {
                 highestBidderEl.innerHTML += ' <span class="text-green-600 font-semibold">(¡Eres tú!)</span>';
@@ -578,7 +634,7 @@ service cloud.firestore {
             renderBidHistory(data.bids);
             handleAuctionStatus(data);
         }
-        
+
         async function handleBidSubmit(e) {
             e.preventDefault();
             const bidAmount = parseFloat(bidAmountInput.value);
@@ -592,7 +648,7 @@ service cloud.firestore {
         }
 
         async function placeBid(newBidAmount) {
-             if (!userProfile) return;
+            if (!userProfile) return;
             submitBidBtn.disabled = true;
             quickBidBtn.disabled = true;
             submitBidBtn.textContent = 'Procesando...';
@@ -620,7 +676,7 @@ service cloud.firestore {
                 };
 
                 const timeLeft = new Date(data.endTime) - new Date();
-                if (timeLeft < 60000) { // Menos de 60 segundos
+                if (timeLeft < 60000) {
                     const newEndTime = new Date(new Date().getTime() + 22 * 1000);
                     updatePayload.endTime = newEndTime.toISOString();
                     messageBox.textContent = '¡Tiempo extendido 22 segundos!';
@@ -660,35 +716,32 @@ service cloud.firestore {
                     throw new Error("Ya no eres el mayor postor.");
                 }
 
-                // Crea una nueva lista de pujas excluyendo TODAS las del usuario actual
                 const remainingBids = data.bids.filter(b => b.uid !== currentUser.uid);
 
                 if (remainingBids.length === 0) {
-                    // Si no quedan otras pujas, reiniciar la subasta
                     await updateDoc(auctionRef, {
                         bids: [],
                         currentBid: data.startingBid,
                         highestBidder: { nickname: 'Nadie aún', uid: null }
                     });
                 } else {
-                    // Si quedan pujas, encontrar la nueva más alta
                     const sortedBids = remainingBids.sort((a, b) => b.amount - a.amount);
                     const newHighestBid = sortedBids[0];
-                    
+
                     await updateDoc(auctionRef, {
                         bids: remainingBids,
                         currentBid: newHighestBid.amount,
                         highestBidder: { nickname: newHighestBid.nickname, uid: newHighestBid.uid }
                     });
                 }
-                 messageBox.textContent = 'Tu oferta ha sido retirada con éxito.';
-                 messageBox.className = 'mt-4 text-center text-sm font-medium text-green-600';
+                messageBox.textContent = 'Tu oferta ha sido retirada con éxito.';
+                messageBox.className = 'mt-4 text-center text-sm font-medium text-green-600';
             } catch (error) {
                 messageBox.textContent = `Error al retirar: ${error.message}`;
                 messageBox.className = 'mt-4 text-center text-sm font-medium text-red-600';
             }
         }
-        
+
         function renderBidHistory(bids) {
             bidHistoryEl.innerHTML = '<ul class="space-y-2"></ul>';
             if (!bids || bids.length === 0) {
@@ -704,7 +757,7 @@ service cloud.firestore {
                 bidHistoryEl.querySelector('ul').appendChild(li);
             });
         }
-        
+
         function handleAuctionStatus(data) {
             const timerId = `detail-timer-${data.productId}`;
             if (countdownIntervals[timerId]) clearInterval(countdownIntervals[timerId]);
