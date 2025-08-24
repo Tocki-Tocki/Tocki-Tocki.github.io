@@ -134,12 +134,40 @@
             measurementId: "G-WZQB1M3JD6"
         };
 
-        // --- GESTIÓN DE IMÁGENES DE PRODUCTOS (LOCAL) ---
+        // --- GESTIÓN DE IMÁGENES DE PRODUCTOS (LOCAL, EN LA RAÍZ) ---
         const PRODUCT_IMAGES = {
-            'reloj-suizo-01': ['https://placehold.co/600x400/1abc9c/ffffff?text=Reloj+1', 'https://placehold.co/600x400/16a085/ffffff?text=Reloj+2', 'https://placehold.co/600x400/27ae60/ffffff?text=Reloj+3'],
-            'laptop-gamer-02': ['https://placehold.co/600x400/3498db/ffffff?text=Laptop+1', 'https://placehold.co/600x400/2980b9/ffffff?text=Laptop+2'],
-            'consola-juegos-03': ['https://placehold.co/600x400/9b59b6/ffffff?text=Consola'],
-            'camara-profesional-04': ['https://placehold.co/600x400/e74c3c/ffffff?text=Cámara+1', 'https://placehold.co/600x400/c0392b/ffffff?text=Cámara+2', 'https://placehold.co/600x400/d35400/ffffff?text=Cámara+3', 'https://placehold.co/600x400/e67e22/ffffff?text=Cámara+4'],
+            // 1) Smartwatch (2 fotos)
+            'smartwatch-01': [
+                './smartwatch-1.jpg',
+                './smartwatch-2.jpg'
+            ],
+
+            // 2) PlayStation 5 (1 foto)
+            'ps5-01': [
+                './ps5.jpg'
+            ],
+
+            // 3) Vapers MTRX 25.000 Puff (1 imagen cada uno)
+            'mtrx-25000puff-manzana-verde-sandia': [
+                './mtrx-green-apple-watermelon.jpg'
+            ],
+            'mtrx-25000puff-sandia-acida': [
+                './mtrx-watermelon-sour-batch.jpg'
+            ],
+            'mtrx-25000puff-frambuesa-azul': [
+                './mtrx-blue-razz.jpg'
+            ],
+            'mtrx-25000puff-arandano-airhead': [
+                './mtrx-blueberry-airhead.jpg'
+            ],
+
+            // 4) Cera Rude Boy (2 imágenes)
+            'rude-boy-cera-brillante': [
+                './rude-boy-cera-brillante-1.jpg',
+                './rude-boy-cera-brillante-2.jpg'
+            ],
+
+            // Slots vacíos (placeholders si luego quieres activar más)
             'slot-05': ['https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+5'],
             'slot-06': ['https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+6'],
             'slot-07': ['https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+7'],
@@ -150,12 +178,24 @@
             'slot-12': ['https://placehold.co/600x400/bdc3c7/ffffff?text=Slot+12'],
         };
 
-        // --- CONFIGURACIÓN DE PRODUCTOS PARA SUBASTAR (Máximo 12) ---
+        // --- CONFIGURACIÓN DE PRODUCTOS PARA SUBASTAR (EN ORDEN DE PRIORIDAD) ---
         const AUCTION_PRODUCTS = [
-            { isActive: true, productId: 'reloj-suizo-01', productName: 'Reloj Suizo de Colección', productDescription: 'Un reloj automático de fabricación suiza con maquinaria visible y correa de cuero genuino.', startingBid: 500, auctionDurationHours: 12, minIncrement: 50 },
-            { isActive: true, productId: 'laptop-gamer-02', productName: 'Laptop Gamer X-Force', productDescription: 'Potente laptop con tarjeta gráfica de última generación, 32GB de RAM y pantalla de 144Hz.', startingBid: 1200, auctionDurationHours: 24, minIncrement: 100 },
-            { isActive: true, productId: 'consola-juegos-03', productName: 'Consola de Videojuegos NextGen', productDescription: 'La última consola del mercado con 1TB de almacenamiento y un control inalámbrico.', startingBid: 450, auctionDurationHours: 8, minIncrement: 25 },
-            { isActive: true, productId: 'camara-profesional-04', productName: 'Cámara Profesional Mirrorless', productDescription: 'Cámara con sensor Full-Frame de 42MP, grabación en 4K y estabilización de 5 ejes.', startingBid: 1800, auctionDurationHours: 48, minIncrement: 150 },
+            // 1) Smart Watch primero
+            { isActive: true, productId: 'smartwatch-01', productName: 'Reloj Smart Watch', productDescription: 'Reloj inteligente con monitoreo de actividad y notificaciones.', startingBid: 50000, auctionDurationHours: 24, minIncrement: 5000 },
+
+            // 2) PlayStation 5
+            { isActive: true, productId: 'ps5-01', productName: 'PlayStation 5', productDescription: 'Consola de última generación con gráficos 4K y mando DualSense.', startingBid: 1100000, auctionDurationHours: 24, minIncrement: 15000 },
+
+            // 3) Vapers MTRX (encabezados con sabores en español)
+            { isActive: true, productId: 'mtrx-25000puff-manzana-verde-sandia', productName: 'Vaper MTRX 25.000 Puff – Manzana Verde y Sandía', productDescription: 'Sabor intenso y duradero. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
+            { isActive: true, productId: 'mtrx-25000puff-sandia-acida', productName: 'Vaper MTRX 25.000 Puff – Sandía Ácida', productDescription: 'Sabor tipo “Sour Batch”. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
+            { isActive: true, productId: 'mtrx-25000puff-frambuesa-azul', productName: 'Vaper MTRX 25.000 Puff – Frambuesa Azul', productDescription: 'Clásico “Blue Razz”. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
+            { isActive: true, productId: 'mtrx-25000puff-arandano-airhead', productName: 'Vaper MTRX 25.000 Puff – Arándano Airhead', productDescription: 'Sabor dulce a arándano. Un (1) dispositivo, desechable.', startingBid: 35000, auctionDurationHours: 24, minIncrement: 2000 },
+
+            // 4) Cera Rude Boy
+            { isActive: true, productId: 'rude-boy-cera-brillante', productName: 'Cera de Cabello Rude Boy – Brillante', productDescription: 'Fijación y brillo para peinados definidos.', startingBid: 24000, auctionDurationHours: 24, minIncrement: 1000 },
+
+            // Desactivados por ahora
             { isActive: false, productId: 'slot-05', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
             { isActive: false, productId: 'slot-06', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
             { isActive: false, productId: 'slot-07', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
@@ -407,13 +447,27 @@ service cloud.firestore {
                         highestBidder: { nickname: 'Nadie aún', uid: null },
                         endTime: endTime.toISOString(),
                         bids: [],
-                        status: 'active'
+                        status: product.isActive ? 'active' : 'inactive'
                     });
+                } else {
+                    // Si ya existe, actualiza visibilidad/estado si cambió
+                    const data = docSnap.data();
+                    const updates = {};
+                    if (data.isActive !== product.isActive) updates.isActive = product.isActive;
+                    const desiredStatus = product.isActive ? 'active' : 'inactive';
+                    if (data.status !== desiredStatus) updates.status = desiredStatus;
+                    if (Object.keys(updates).length) {
+                        await updateDoc(auctionRef, updates);
+                    }
                 }
             }
         }
 
         function renderLobby(auctions) {
+            // Ordena por el orden de AUCTION_PRODUCTS para respetar la prioridad
+            const orderMap = AUCTION_PRODUCTS.reduce((acc, p, idx) => (acc[p.productId] = idx, acc), {});
+            auctions.sort((a, b) => (orderMap[a.id] ?? 999) - (orderMap[b.id] ?? 999));
+
             auctionList.innerHTML = '';
             auctions.forEach(auction => {
                 const card = document.createElement('div');
@@ -487,7 +541,6 @@ service cloud.firestore {
                 }
             });
         }
-
 
         // --- LÓGICA DE LA VISTA DE DETALLE ---
         function formatBid(num) {
