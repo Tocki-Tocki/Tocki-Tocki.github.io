@@ -1,46 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Plataforma de Subastas en Tiempo Real</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .loader {
-      border-top-color: #4f46e5;
-      -webkit-animation: spinner 1.5s linear infinite;
-      animation: spinner 1.5s linear infinite;
-    }
-    @-webkit-keyframes spinner {
-      0% { -webkit-transform: rotate(0deg); }
-      100% { -webkit-transform: rotate(360deg); }
-    }
-    @keyframes spinner {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button {
-      -webkit-appearance: none; margin: 0;
-    }
+    .loader { border-top-color: #4f46e5; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+    @-webkit-keyframes spinner { 0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); } }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
-    .thumbnail.active {
-      border-color: #4f46e5;
-      opacity: 1;
-    }
+    .thumbnail.active { border-color: #4f46e5; opacity: 1; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
-
+  <!-- Overlay de carga -->
   <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
     <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
   </div>
 
   <div class="container mx-auto p-4 md:p-8">
+    <!-- Perfil -->
     <div id="user-profile-area" class="mb-6"></div>
 
+    <!-- Lobby -->
     <div id="lobby-view" class="hidden">
       <header class="text-center mb-8">
         <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Subastas Activas</h1>
@@ -49,11 +35,13 @@
       <div id="auction-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
     </div>
 
+    <!-- Detalle -->
     <div id="detail-view" class="hidden">
       <button id="back-to-lobby-btn" class="mb-6 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
         &larr; Volver a todas las subastas
       </button>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Columna Producto -->
         <div class="bg-white p-6 rounded-xl shadow-lg">
           <div id="carousel-container" class="relative w-full">
             <div id="main-image-container" class="mb-2 rounded-lg overflow-hidden">
@@ -67,6 +55,7 @@
           <p id="product-description" class="text-gray-600"></p>
         </div>
 
+        <!-- Columna Subasta -->
         <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col">
           <div id="auction-status-banner" class="p-4 rounded-lg text-center mb-4"></div>
           <div class="grid grid-cols-2 gap-4 mb-4 text-center">
@@ -106,14 +95,15 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </div><!-- /detalle -->
+  </div><!-- /container -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // --- CONFIG FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyBap76ek_mUzHru0TdvlUd8jIagieOtcOI",
       authDomain: "tocki-tocki.firebaseapp.com",
@@ -124,70 +114,621 @@
       measurementId: "G-WZQB1M3JD6"
     };
 
+    // --- IMÁGENES LOCALES ---
     const PRODUCT_IMAGES = {
-      'smartwatch-01': ['./smartwatch-1.jpg','./smartwatch-2.jpg'],
+      'smartwatch-01': ['./smartwatch-1.jpg', './smartwatch-2.jpg'],
       'ps5-01': ['./ps5.jpg'],
       'mtrx-25000puff-manzana-verde': ['./mtrx-green-apple-watermelon.jpg'],
       'mtrx-25000puff-sandia-acida': ['./mtrx-watermelon-sour-batch.jpg'],
       'mtrx-25000puff-frambuesa-azul': ['./mtrx-blue-razz.jpg'],
       'mtrx-25000puff-mora-airhead': ['./mtrx-blueberry-airhead.jpg'],
-      'rude-boy-cera-brillante': ['./rude-boy-cera-brillante-1.jpg','./rude-boy-cera-brillante-2.jpg']
+      'rude-boy-cera-brillante': ['./rude-boy-cera-brillante-1.jpg', './rude-boy-cera-brillante-2.jpg'],
     };
 
+    // --- PRODUCTOS (en orden) ---
     const AUCTION_PRODUCTS = [
       {
         isActive: true,
         productId: 'smartwatch-01',
         productName: 'Reloj Smart Watch',
-        productDescription: 'Reloj inteligente genérico ideal para el día a día. Ofrece seguimiento básico de pasos, calorías y ritmo cardíaco. Permite recibir notificaciones de llamadas y mensajes por Bluetooth con Android/iOS. Es resistente a salpicaduras y cuenta con batería recargable de buena duración.',
+        productDescription: 'Reloj inteligente genérico ideal para el día a día. Seguimiento de pasos, calorías y ritmo cardíaco. Notificaciones por Bluetooth con Android/iOS. Resistente a salpicaduras y batería recargable de buena duración.',
         startingBid: 50000, auctionDurationHours: 360, minIncrement: 5000
       },
       {
         isActive: true,
         productId: 'ps5-01',
         productName: 'PlayStation 5 (Solo juegos físicos)',
-        productDescription: 'Consola PS5 FAT con lector de discos. Está baneada de PSN, por lo que no se puede jugar en línea ni acceder a la tienda digital. Funciona perfectamente con juegos en disco. Se entrega con 1 control DualSense, cables y garantía de 30 días.',
+        productDescription: 'PS5 FAT con lector de discos. Baneada de PSN: no online ni tienda digital. Funciona perfecto con juegos en disco (offline). Incluye 1 control DualSense, cables y garantía de 30 días.',
         startingBid: 1100000, auctionDurationHours: 360, minIncrement: 15000
       },
       {
         isActive: true,
         productId: 'mtrx-25000puff-manzana-verde',
         productName: 'Vaper MTRX – Manzana Verde',
-        productDescription: 'Vaper desechable de 25.000 puffs, 5% de nicotina, batería recargable USB-C. Sellado y nuevo. No recargable con líquido. Sabor: manzana verde, dulce y fresco.',
+        productDescription: 'Desechable 25.000 puffs, 5% nicotina, batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor dulce y fresco.',
         startingBid: 35000, auctionDurationHours: 360, minIncrement: 2000
       },
       {
         isActive: true,
         productId: 'mtrx-25000puff-sandia-acida',
         productName: 'Vaper MTRX – Sandía Ácida',
-        productDescription: 'Vaper desechable de 25.000 puffs, 5% de nicotina, batería recargable USB-C. Sellado y nuevo. No recargable con líquido. Sabor: sandía ácida estilo caramelos.',
+        productDescription: 'Desechable 25.000 puffs, 5% nicotina, batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor tipo caramelos ácidos.',
         startingBid: 35000, auctionDurationHours: 360, minIncrement: 2000
       },
       {
         isActive: true,
         productId: 'mtrx-25000puff-frambuesa-azul',
         productName: 'Vaper MTRX – Frambuesa Azul',
-        productDescription: 'Vaper desechable de 25.000 puffs, 5% de nicotina, batería recargable USB-C. Sellado y nuevo. No recargable con líquido. Sabor: frambuesa azul, afrutado y ligeramente ácido.',
+        productDescription: 'Desechable 25.000 puffs, 5% nicotina, batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor afrutado con toque ácido.',
         startingBid: 35000, auctionDurationHours: 360, minIncrement: 2000
       },
       {
         isActive: true,
         productId: 'mtrx-25000puff-mora-airhead',
         productName: 'Vaper MTRX – Mora (Airhead)',
-        productDescription: 'Vaper desechable de 25.000 puffs, 5% de nicotina, batería recargable USB-C. Sellado y nuevo. No recargable con líquido. Sabor: mora dulce estilo Airhead con un toque ácido.',
+        productDescription: 'Desechable 25.000 puffs, 5% nicotina, batería recargable USB-C. Sellado y nuevo. No se recarga con líquido. Sabor dulce estilo Airhead.',
         startingBid: 35000, auctionDurationHours: 360, minIncrement: 2000
       },
       {
         isActive: true,
         productId: 'rude-boy-cera-brillante',
         productName: 'Cera Rude Boy Brillante (Fijación Fuerte)',
-        productDescription: 'Cera capilar de fijación fuerte y acabado brillante, base agua. Fácil de aplicar y retirar, sin residuos grasos. Ideal para peinados definidos con efecto húmedo. Apta para uso profesional o diario.',
+        productDescription: 'Cera base agua de fijación fuerte y acabado brillante. Fácil de aplicar y retirar, sin residuos grasos. Ideal para peinados definidos con efecto húmedo (uso diario o profesional).',
         startingBid: 24000, auctionDurationHours: 360, minIncrement: 1000
-      }
+      },
+      // slots opcionales si quieres llegar a 12
+      { isActive: false, productId: 'slot-08', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+      { isActive: false, productId: 'slot-09', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+      { isActive: false, productId: 'slot-10', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+      { isActive: false, productId: 'slot-11', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
+      { isActive: false, productId: 'slot-12', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
     ];
 
-    // --- resto del script igual al que ya tenías (manejo firebase, lobby, bids, etc) ---
+    // --- ELEMENTOS DOM ---
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const userProfileArea = document.getElementById('user-profile-area');
+    const lobbyView = document.getElementById('lobby-view');
+    const auctionList = document.getElementById('auction-list');
+    const detailView = document.getElementById('detail-view');
+    const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
+    const productNameEl = document.getElementById('product-name');
+    const productDescriptionEl = document.getElementById('product-description');
+    const productImageEl = document.getElementById('product-image');
+    const currentBidEl = document.getElementById('current-bid');
+    const highestBidderEl = document.getElementById('highest-bidder');
+    const countdownTimerEl = document.getElementById('countdown-timer');
+    const bidForm = document.getElementById('bid-form');
+    const bidAmountInput = document.getElementById('bid-amount');
+    const submitBidBtn = document.getElementById('submit-bid');
+    const quickBidBtn = document.getElementById('quick-bid-btn');
+    const bidHistoryEl = document.getElementById('bid-history');
+    const messageBox = document.getElementById('message-box');
+    const auctionStatusBanner = document.getElementById('auction-status-banner');
+    const withdrawBidContainer = document.getElementById('withdraw-bid-container');
+    const thumbnailContainer = document.getElementById('thumbnail-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    // --- ESTADO ---
+    let db, auth;
+    let currentUser = null, userProfile = null;
+    let currentAuctionId = null;
+    let currentAuctionData = null;
+    let countdownIntervals = {};
+    let currentImageIndex = 0;
+
+    // --- INIT ---
+    async function main() {
+      try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        backToLobbyBtn.addEventListener('click', showLobbyView);
+        bidForm.addEventListener('submit', handleBidSubmit);
+        quickBidBtn.addEventListener('click', handleQuickBid);
+
+        onAuthStateChanged(auth, handleAuthStateChange);
+      } catch (e) {
+        console.error(e);
+        // Fallback por si algo falla muy temprano
+        loadingOverlay.style.display = 'none';
+      }
+    }
+
+    // --- ERRORES DE PERMISOS ---
+    function handlePermissionError() {
+      loadingOverlay.style.display = 'flex';
+      loadingOverlay.innerHTML = `
+        <div class="text-white text-center p-8 bg-red-800 rounded-lg shadow-2xl max-w-lg mx-auto">
+          <h2 class="text-3xl font-bold mb-4">¡ACCIÓN REQUERIDA!</h2>
+          <p class="mb-4 text-lg">Error de permisos en Firestore.</p>
+          <p class="mt-4 text-base bg-red-900 p-4 rounded-md">
+            <strong>Para que la aplicación funcione, actualiza las Reglas de Firestore y habilita Auth anónimo.</strong><br><br>
+            <strong class="block text-left">Reglas sugeridas:</strong>
+            <pre class="text-left bg-black p-2 rounded-md mt-2 overflow-x-auto text-sm"><code>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</code></pre>
+            <br>Luego <strong>recarga</strong> esta página.
+          </p>
+        </div>`;
+    }
+
+    // --- AUTH Y PERFIL ---
+    async function handleAuthStateChange(user) {
+      if (user) {
+        currentUser = { uid: user.uid };
+        await checkUserProfile();
+      } else {
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          if (err.code === 'auth/admin-restricted-operation') {
+            loadingOverlay.innerHTML = `
+              <div class="text-white text-center p-8 bg-red-800 rounded-lg shadow-2xl max-w-lg mx-auto">
+                <h2 class="text-3xl font-bold mb-4">¡ACCIÓN REQUERIDA!</h2>
+                <p class="mb-4 text-lg">Habilita el "Inicio de Sesión Anónimo" en Firebase > Authentication.</p>
+              </div>`;
+          }
+        }
+      }
+    }
+
+    async function checkUserProfile() {
+      try {
+        const usersRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(usersRef);
+        if (userDoc.exists()) {
+          userProfile = userDoc.data();
+          renderUserProfile();
+          await loadLobby();
+        } else {
+          renderProfileInputForm();
+        }
+      } catch (error) {
+        if (error.code === 'permission-denied') {
+          handlePermissionError();
+        } else {
+          console.error("Error al verificar perfil:", error);
+          // No bloquees la UI para que el usuario pueda ver el formulario
+          renderProfileInputForm();
+        }
+      }
+    }
+
+    function renderProfileInputForm() {
+      userProfileArea.innerHTML = `
+        <div id="profile-modal" class="bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md shadow-lg">
+          <h3 class="font-bold text-lg">Crea tu Perfil para Participar</h3>
+          <p class="mb-3">Tu Nickname será tu identificador público en las subastas.</p>
+          <form id="profile-form" class="space-y-3">
+            <div>
+              <label for="name-input" class="block text-sm font-medium">Nombre Completo</label>
+              <input type="text" id="name-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+              <label for="cedula-input" class="block text-sm font-medium">Cédula</label>
+              <input type="number" id="cedula-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+              <label for="phone-input" class="block text-sm font-medium">Número de Teléfono</label>
+              <input type="tel" id="phone-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+              <label for="nickname-input" class="block text-sm font-medium">Nickname (único)</label>
+              <input type="text" id="nickname-input" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+            </div>
+            <button type="submit" id="profile-submit-btn" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md">Crear Perfil</button>
+          </form>
+          <div id="profile-error" class="text-red-600 text-sm mt-2 font-semibold"></div>
+        </div>`;
+      document.getElementById('profile-form').addEventListener('submit', saveUserProfile);
+      // Quitamos overlay aquí para que el usuario vea el formulario
+      loadingOverlay.style.display = 'none';
+    }
+
+    async function saveUserProfile(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('profile-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verificando...';
+      const errorEl = document.getElementById('profile-error');
+      errorEl.textContent = '';
+
+      const name = document.getElementById('name-input').value.trim();
+      const cedula = document.getElementById('cedula-input').value.trim();
+      const phone = document.getElementById('phone-input').value.trim();
+      const nickname = document.getElementById('nickname-input').value.trim();
+
+      try {
+        if (!name || !cedula || !phone || !nickname) throw new Error('Todos los campos son obligatorios.');
+        if (!/^\d+$/.test(cedula)) throw new Error('La cédula solo debe contener números.');
+        if (!/^\d{7,}$/.test(phone)) throw new Error('El teléfono debe tener al menos 7 dígitos.');
+
+        const usersCol = collection(db, "users");
+        const q = query(usersCol, where("nickname", "==", nickname));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) throw new Error('Este nickname ya está en uso. Elige otro.');
+
+        const newProfile = { displayName: name, cedula, phone, nickname, uid: currentUser.uid };
+        const usersRef = doc(db, "users", currentUser.uid);
+        await setDoc(usersRef, newProfile);
+        userProfile = newProfile;
+        userProfileArea.innerHTML = '';
+        renderUserProfile();
+        loadLobby();
+      } catch (error) {
+        if (error.code === 'permission-denied') {
+          handlePermissionError();
+        } else {
+          errorEl.textContent = error.message;
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Crear Perfil';
+      }
+    }
+
+    function renderUserProfile() {
+      userProfileArea.innerHTML = `
+        <div class="bg-white p-3 rounded-lg shadow-sm border flex justify-between items-center">
+          <p>Bienvenido, <strong class="font-semibold">${userProfile.nickname}</strong></p>
+          <button id="logout-btn" class="text-sm text-indigo-600 hover:underline">Cerrar Sesión</button>
+        </div>`;
+      document.getElementById('logout-btn').addEventListener('click', () => auth.signOut().then(() => window.location.reload()));
+      lobbyView.classList.remove('hidden');
+    }
+
+    // --- VISTAS ---
+    function showLobbyView() {
+      detailView.classList.add('hidden');
+      lobbyView.classList.remove('hidden');
+      currentAuctionId = null;
+      currentAuctionData = null;
+      document.title = 'Plataforma de Subastas';
+    }
+
+    function showDetailView(productId) {
+      lobbyView.classList.add('hidden');
+      detailView.classList.remove('hidden');
+      currentAuctionId = productId;
+      Object.values(countdownIntervals).forEach(clearInterval);
+      messageBox.textContent = '';
+      const auctionRef = doc(db, "auctions", productId);
+      onSnapshot(auctionRef, (docSnap) => {
+        if (currentAuctionId === productId && docSnap.exists()) {
+          const data = docSnap.data();
+          if (!currentAuctionData) {
+            const imageUrls = PRODUCT_IMAGES[data.productId] || ['https://placehold.co/600x400/cccccc/ffffff?text=No+Image'];
+            renderCarousel(imageUrls);
+          }
+          currentAuctionData = data;
+          updateDetailViewUI(currentAuctionData);
+        }
+      });
+    }
+
+    // --- LOBBY ---
+    async function loadLobby() {
+      try {
+        await setupAuctions();
+        const auctionsCol = collection(db, "auctions");
+        onSnapshot(query(auctionsCol, where("isActive", "==", true)), (snapshot) => {
+          const auctionsData = [];
+          snapshot.forEach(d => auctionsData.push({ id: d.id, ...d.data() }));
+          renderLobby(auctionsData);
+          loadingOverlay.style.display = 'none';
+        }, (error) => {
+          if (error.code === 'permission-denied') handlePermissionError();
+        });
+      } catch (error) {
+        if (error.code === 'permission-denied') {
+          handlePermissionError();
+        } else {
+          console.error(error);
+          loadingOverlay.style.display = 'none';
+        }
+      }
+    }
+
+    async function setupAuctions() {
+      const auctionsCol = collection(db, "auctions");
+      for (const product of AUCTION_PRODUCTS) {
+        const auctionRef = doc(auctionsCol, product.productId);
+        const docSnap = await getDoc(auctionRef);
+        if (!docSnap.exists()) {
+          const now = new Date();
+          const endTime = new Date(now.getTime() + product.auctionDurationHours * 60 * 60 * 1000);
+          await setDoc(auctionRef, {
+            ...product,
+            currentBid: product.startingBid,
+            highestBidder: { nickname: 'Nadie aún', uid: null },
+            endTime: endTime.toISOString(),
+            bids: [],
+            status: product.isActive ? 'active' : 'inactive'
+          });
+        } else {
+          // sincrono visibilidad/estado
+          const data = docSnap.data();
+          const updates = {};
+          if (data.isActive !== product.isActive) updates.isActive = product.isActive;
+          const desiredStatus = product.isActive ? 'active' : 'inactive';
+          if (data.status !== desiredStatus) updates.status = desiredStatus;
+          if (Object.keys(updates).length) await updateDoc(auctionRef, updates);
+        }
+      }
+    }
+
+    function renderLobby(auctions) {
+      // respetar orden
+      const orderMap = AUCTION_PRODUCTS.reduce((acc, p, i) => (acc[p.productId] = i, acc), {});
+      auctions.sort((a,b) => (orderMap[a.id] ?? 999) - (orderMap[b.id] ?? 999));
+
+      auctionList.innerHTML = '';
+      auctions.forEach(auction => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
+        card.dataset.id = auction.id;
+        const timeId = `time-${auction.id}`, bidId = `bid-${auction.id}`;
+        const imageUrls = PRODUCT_IMAGES[auction.id] || ['https://placehold.co/600x400/cccccc/ffffff?text=No+Image'];
+        card.innerHTML = `
+          <img src="${imageUrls[0]}" alt="${auction.productName}" class="w-full h-48 object-cover">
+          <div class="p-4">
+            <h3 class="text-xl font-bold text-gray-900 truncate">${auction.productName}</h3>
+            <div class="mt-4 flex justify-between items-center">
+              <div>
+                <p class="text-sm text-gray-500">Oferta actual</p>
+                <p id="${bidId}" class="text-2xl font-bold text-green-600">$${auction.currentBid.toLocaleString()}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 text-right">Termina en</p>
+                <p id="${timeId}" class="text-xl font-bold text-red-600">--:--:--</p>
+              </div>
+            </div>
+          </div>`;
+        auctionList.appendChild(card);
+        card.addEventListener('click', () => showDetailView(auction.id));
+        document.getElementById(bidId).textContent = formatBid(auction.currentBid);
+        updateCardTimer(timeId, auction.endTime, auction.status);
+      });
+    }
+
+    function updateCardTimer(elementId, endTimeStr, status) {
+      if (countdownIntervals[elementId]) clearInterval(countdownIntervals[elementId]);
+      const timerEl = document.getElementById(elementId);
+      const endTime = new Date(endTimeStr);
+      function update() {
+        if (!timerEl) return;
+        const timeLeft = endTime - new Date();
+        if (timeLeft <= 0 || status === 'ended') {
+          timerEl.textContent = 'Finalizada';
+          clearInterval(countdownIntervals[elementId]);
+        } else {
+          const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
+          const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
+          const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
+          timerEl.textContent = `${h}:${m}:${s}`;
+        }
+      }
+      update();
+      countdownIntervals[elementId] = setInterval(update, 1000);
+    }
+
+    // --- CARRUSEL ---
+    function renderCarousel(imageUrls) {
+      currentImageIndex = 0;
+      thumbnailContainer.innerHTML = '';
+      imageUrls.forEach((url, index) => {
+        const thumb = document.createElement('img');
+        thumb.src = url;
+        thumb.className = 'thumbnail w-16 h-16 object-cover rounded-md cursor-pointer border-2 border-transparent opacity-60 hover:opacity-100';
+        thumb.onclick = () => showImage(index, imageUrls);
+        thumbnailContainer.appendChild(thumb);
+      });
+      prevBtn.onclick = () => showImage(currentImageIndex - 1, imageUrls);
+      nextBtn.onclick = () => showImage(currentImageIndex + 1, imageUrls);
+      showImage(0, imageUrls);
+    }
+
+    function showImage(index, imageUrls) {
+      const total = imageUrls.length;
+      if (index >= total) index = 0;
+      else if (index < 0) index = total - 1;
+      currentImageIndex = index;
+      productImageEl.src = imageUrls[index];
+
+      const thumbnails = document.querySelectorAll('.thumbnail');
+      thumbnails.forEach((thumb, i) => thumb.classList.toggle('active', i === index));
+    }
+
+    // --- DETALLE / BIDS ---
+    function formatBid(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+      if (num >= 100000) return (num / 1000).toFixed(0) + 'k';
+      return num.toLocaleString('es-CO');
+    }
+
+    function updateDetailViewUI(data) {
+      document.title = data.productName;
+      productNameEl.textContent = data.productName;
+      productDescriptionEl.textContent = data.productDescription;
+      currentBidEl.textContent = `$${formatBid(data.currentBid)}`;
+      highestBidderEl.textContent = data.highestBidder.nickname || '';
+
+      withdrawBidContainer.innerHTML = '';
+      if (currentUser && data.highestBidder.uid === currentUser.uid) {
+        highestBidderEl.innerHTML += ' <span class="text-green-600 font-semibold">(¡Eres tú!)</span>';
+        const withdrawBtn = document.createElement('button');
+        withdrawBtn.id = 'withdraw-btn';
+        withdrawBtn.className = 'text-xs text-red-500 hover:underline';
+        withdrawBtn.textContent = 'Retirar mi oferta';
+        withdrawBtn.onclick = handleWithdrawBid;
+        withdrawBidContainer.appendChild(withdrawBtn);
+      }
+
+      const nextBid = data.currentBid + data.minIncrement;
+      bidAmountInput.placeholder = `Mínimo $${nextBid.toLocaleString()}`;
+      quickBidBtn.textContent = `Ofertar $${nextBid.toLocaleString()}`;
+
+      renderBidHistory(data.bids);
+      handleAuctionStatus(data);
+    }
+
+    async function handleBidSubmit(e) {
+      e.preventDefault();
+      const bidAmount = parseFloat(bidAmountInput.value);
+      await placeBid(bidAmount);
+    }
+
+    async function handleQuickBid() {
+      if (!currentAuctionData) return;
+      const quickBidAmount = currentAuctionData.currentBid + currentAuctionData.minIncrement;
+      await placeBid(quickBidAmount);
+    }
+
+    async function placeBid(newBidAmount) {
+      if (!userProfile) return;
+      submitBidBtn.disabled = true;
+      quickBidBtn.disabled = true;
+      submitBidBtn.textContent = 'Procesando...';
+      messageBox.textContent = '';
+      const auctionRef = doc(db, "auctions", currentAuctionId);
+
+      try {
+        const auctionDoc = await getDoc(auctionRef);
+        const data = auctionDoc.data();
+        if (data.status === 'ended') throw new Error("La subasta ya ha terminado.");
+        if (isNaN(newBidAmount) || newBidAmount < data.currentBid + data.minIncrement) {
+          throw new Error(`Tu oferta debe ser de al menos $${(data.currentBid + data.minIncrement).toLocaleString()}.`);
+        }
+
+        const updatePayload = {
+          currentBid: newBidAmount,
+          highestBidder: { nickname: userProfile.nickname, uid: currentUser.uid },
+          bids: arrayUnion({
+            uid: currentUser.uid,
+            nickname: userProfile.nickname,
+            amount: newBidAmount,
+            timestamp: new Date().toISOString(),
+            userDetails: { name: userProfile.displayName, cedula: userProfile.cedula, phone: userProfile.phone }
+          })
+        };
+
+        const timeLeft = new Date(data.endTime) - new Date();
+        if (timeLeft < 60000) { // <60s: extender 22s
+          const newEndTime = new Date(new Date().getTime() + 22 * 1000);
+          updatePayload.endTime = newEndTime.toISOString();
+          messageBox.textContent = '¡Tiempo extendido 22 segundos!';
+          messageBox.className = 'mt-4 text-center text-sm font-medium text-orange-500';
+        }
+
+        await updateDoc(auctionRef, updatePayload);
+        if (!messageBox.textContent) {
+          messageBox.textContent = '¡Oferta realizada con éxito!';
+          messageBox.className = 'mt-4 text-center text-sm font-medium text-green-600';
+        }
+        bidAmountInput.value = '';
+      } catch (error) {
+        messageBox.textContent = error.message;
+        messageBox.className = 'mt-4 text-center text-sm font-medium text-red-600';
+      } finally {
+        submitBidBtn.disabled = false;
+        quickBidBtn.disabled = false;
+        submitBidBtn.textContent = 'Realizar Oferta';
+      }
+    }
+
+    async function handleWithdrawBid() {
+      const withdrawBtn = document.getElementById('withdraw-btn');
+      if (withdrawBtn) { withdrawBtn.disabled = true; withdrawBtn.textContent = 'Retirando...'; }
+
+      const auctionRef = doc(db, "auctions", currentAuctionId);
+      try {
+        const auctionDoc = await getDoc(auctionRef);
+        let data = auctionDoc.data();
+
+        if (data.highestBidder.uid !== currentUser.uid) throw new Error("Ya no eres el mayor postor.");
+
+        const remainingBids = data.bids.filter(b => b.uid !== currentUser.uid);
+
+        if (remainingBids.length === 0) {
+          await updateDoc(auctionRef, {
+            bids: [],
+            currentBid: data.startingBid,
+            highestBidder: { nickname: 'Nadie aún', uid: null }
+          });
+        } else {
+          const sortedBids = remainingBids.sort((a, b) => b.amount - a.amount);
+          const newHighestBid = sortedBids[0];
+          await updateDoc(auctionRef, {
+            bids: remainingBids,
+            currentBid: newHighestBid.amount,
+            highestBidder: { nickname: newHighestBid.nickname, uid: newHighestBid.uid }
+          });
+        }
+        messageBox.textContent = 'Tu oferta ha sido retirada con éxito.';
+        messageBox.className = 'mt-4 text-center text-sm font-medium text-green-600';
+      } catch (error) {
+        messageBox.textContent = `Error al retirar: ${error.message}`;
+        messageBox.className = 'mt-4 text-center text-sm font-medium text-red-600';
+      }
+    }
+
+    function renderBidHistory(bids) {
+      bidHistoryEl.innerHTML = '<ul class="space-y-2"></ul>';
+      if (!bids || bids.length === 0) {
+        bidHistoryEl.innerHTML = '<li class="text-gray-500 text-center">Aún no hay ofertas.</li>';
+        return;
+      }
+      const sortedBids = [...bids].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      sortedBids.forEach(bid => {
+        const li = document.createElement('li');
+        const isCurrentUser = currentUser && bid.uid === currentUser.uid;
+        li.className = `flex justify-between items-center p-2 rounded-md ${isCurrentUser ? 'bg-blue-100' : 'bg-gray-100'}`;
+        li.innerHTML = `<span class="font-semibold text-sm truncate">${bid.nickname}</span><span class="font-bold text-gray-800">$${bid.amount.toLocaleString()}</span>`;
+        bidHistoryEl.querySelector('ul').appendChild(li);
+      });
+    }
+
+    function handleAuctionStatus(data) {
+      const timerId = `detail-timer-${data.productId}`;
+      if (countdownIntervals[timerId]) clearInterval(countdownIntervals[timerId]);
+      const endTime = new Date(data.endTime);
+      function update() {
+        const timeLeft = endTime - new Date();
+        if (timeLeft <= 0 || data.status === 'ended') {
+          clearInterval(countdownIntervals[timerId]);
+          countdownTimerEl.textContent = "Finalizada";
+          auctionStatusBanner.innerHTML = `
+            <h3 class="text-xl font-bold text-white">Subasta Terminada</h3>
+            <p class="text-white">Ganador: <strong class="font-semibold">${data.highestBidder.nickname}</strong></p>`;
+          auctionStatusBanner.className = 'p-4 rounded-lg text-center mb-4 bg-red-600';
+          submitBidBtn.disabled = true; quickBidBtn.disabled = true; bidAmountInput.disabled = true;
+          if (data.status === 'active' && data.highestBidder.uid) {
+            const auctionRef = doc(db, "auctions", data.productId);
+            updateDoc(auctionRef, { status: 'ended' });
+          }
+        } else {
+          const h = Math.floor(timeLeft / 3600000).toString().padStart(2, '0');
+          const m = Math.floor((timeLeft % 3600000) / 60000).toString().padStart(2, '0');
+          const s = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0');
+          countdownTimerEl.textContent = `${h}:${m}:${s}`;
+          auctionStatusBanner.innerHTML = `<h3 class="text-xl font-bold text-white">¡Subasta en curso!</h3>`;
+          auctionStatusBanner.className = 'p-4 rounded-lg text-center mb-4 bg-green-600';
+          submitBidBtn.disabled = false; quickBidBtn.disabled = false; bidAmountInput.disabled = false;
+        }
+      }
+      update();
+      countdownIntervals[timerId] = setInterval(update, 1000);
+    }
+
+    // --- ARRANQUE ---
+    main();
   </script>
 </body>
 </html>
-
