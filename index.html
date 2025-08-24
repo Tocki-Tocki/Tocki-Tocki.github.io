@@ -217,6 +217,41 @@
     let countdownIntervals = {};
     let currentImageIndex = 0;
 
+    // --- NAVEGACIÓN CON HISTORY API ---
+    function navigateToLobby({ replace = false } = {}) {
+      showLobbyView();
+      const url = '#lobby';
+      const state = { view: 'lobby' };
+      replace ? history.replaceState(state, '', url) : history.pushState(state, '', url);
+    }
+
+    function navigateToDetail(productId, { replace = false } = {}) {
+      showDetailView(productId);
+      const url = `#detail/${encodeURIComponent(productId)}`;
+      const state = { view: 'detail', productId };
+      replace ? history.replaceState(state, '', url) : history.pushState(state, '', url);
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const s = e.state;
+      if (s?.view === 'detail' && s.productId) {
+        showDetailView(s.productId); // no pushes
+      } else {
+        showLobbyView();
+      }
+    });
+
+    // Aplica la ruta inicial (deep-link soporte)
+    function applyInitialRoute() {
+      const h = location.hash || '';
+      if (h.startsWith('#detail/')) {
+        const id = decodeURIComponent(h.split('/')[1] || '');
+        navigateToDetail(id, { replace: true });
+      } else {
+        navigateToLobby({ replace: true });
+      }
+    }
+
     // --- INIT ---
     async function main() {
       try {
@@ -224,14 +259,14 @@
         db = getFirestore(app);
         auth = getAuth(app);
 
-        backToLobbyBtn.addEventListener('click', showLobbyView);
+        // El botón "Volver" usa history.back() para que coincida con el botón físico
+        backToLobbyBtn.addEventListener('click', () => history.back());
         bidForm.addEventListener('submit', handleBidSubmit);
         quickBidBtn.addEventListener('click', handleQuickBid);
 
         onAuthStateChanged(auth, handleAuthStateChange);
       } catch (e) {
         console.error(e);
-        // Fallback por si algo falla muy temprano
         loadingOverlay.style.display = 'none';
       }
     }
@@ -244,7 +279,7 @@
           <h2 class="text-3xl font-bold mb-4">¡ACCIÓN REQUERIDA!</h2>
           <p class="mb-4 text-lg">Error de permisos en Firestore.</p>
           <p class="mt-4 text-base bg-red-900 p-4 rounded-md">
-            <strong>Para que la aplicación funcione, actualiza las Reglas de Firestore y habilita Auth anónimo.</strong><br><br>
+            <strong>Actualiza las Reglas de Firestore y habilita Auth anónimo.</strong><br><br>
             <strong class="block text-left">Reglas sugeridas:</strong>
             <pre class="text-left bg-black p-2 rounded-md mt-2 overflow-x-auto text-sm"><code>rules_version = '2';
 service cloud.firestore {
@@ -272,7 +307,7 @@ service cloud.firestore {
             loadingOverlay.innerHTML = `
               <div class="text-white text-center p-8 bg-red-800 rounded-lg shadow-2xl max-w-lg mx-auto">
                 <h2 class="text-3xl font-bold mb-4">¡ACCIÓN REQUERIDA!</h2>
-                <p class="mb-4 text-lg">Habilita el "Inicio de Sesión Anónimo" en Firebase > Authentication.</p>
+                <p class="mb-4 text-lg">Habilita el "Inicio de Sesión Anónimo" en Firebase &gt; Authentication.</p>
               </div>`;
           }
         }
@@ -287,6 +322,8 @@ service cloud.firestore {
           userProfile = userDoc.data();
           renderUserProfile();
           await loadLobby();
+          // Una vez el lobby esté listo, resolvemos la ruta inicial
+          applyInitialRoute();
         } else {
           renderProfileInputForm();
         }
@@ -295,7 +332,6 @@ service cloud.firestore {
           handlePermissionError();
         } else {
           console.error("Error al verificar perfil:", error);
-          // No bloquees la UI para que el usuario pueda ver el formulario
           renderProfileInputForm();
         }
       }
@@ -328,7 +364,7 @@ service cloud.firestore {
           <div id="profile-error" class="text-red-600 text-sm mt-2 font-semibold"></div>
         </div>`;
       document.getElementById('profile-form').addEventListener('submit', saveUserProfile);
-      // Quitamos overlay aquí para que el usuario vea el formulario
+      // Quita overlay para que el usuario vea el formulario
       loadingOverlay.style.display = 'none';
     }
 
@@ -361,7 +397,8 @@ service cloud.firestore {
         userProfile = newProfile;
         userProfileArea.innerHTML = '';
         renderUserProfile();
-        loadLobby();
+        await loadLobby();
+        applyInitialRoute();
       } catch (error) {
         if (error.code === 'permission-denied') {
           handlePermissionError();
@@ -453,7 +490,7 @@ service cloud.firestore {
             status: product.isActive ? 'active' : 'inactive'
           });
         } else {
-          // sincrono visibilidad/estado
+          // Sincroniza visibilidad/estado si cambió
           const data = docSnap.data();
           const updates = {};
           if (data.isActive !== product.isActive) updates.isActive = product.isActive;
@@ -465,7 +502,7 @@ service cloud.firestore {
     }
 
     function renderLobby(auctions) {
-      // respetar orden
+      // Respeta orden
       const orderMap = AUCTION_PRODUCTS.reduce((acc, p, i) => (acc[p.productId] = i, acc), {});
       auctions.sort((a,b) => (orderMap[a.id] ?? 999) - (orderMap[b.id] ?? 999));
 
@@ -492,7 +529,8 @@ service cloud.firestore {
             </div>
           </div>`;
         auctionList.appendChild(card);
-        card.addEventListener('click', () => showDetailView(auction.id));
+        // Navegación con History API
+        card.addEventListener('click', () => navigateToDetail(auction.id));
         document.getElementById(bidId).textContent = formatBid(auction.currentBid);
         updateCardTimer(timeId, auction.endTime, auction.status);
       });
