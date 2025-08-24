@@ -14,6 +14,8 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
     .thumbnail.active { border-color: #4f46e5; opacity: 1; }
+    /* Garantizar 1:1 en cualquier miniatura/imagen cuadrada */
+    .square { aspect-ratio: 1 / 1; object-fit: cover; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -176,7 +178,7 @@
         productDescription: 'Cera base agua de fijación fuerte y acabado brillante. Fácil de aplicar y retirar, sin residuos grasos. Ideal para peinados definidos con efecto húmedo (uso diario o profesional).',
         startingBid: 24000, auctionDurationHours: 360, minIncrement: 1000
       },
-      // slots opcionales si quieres llegar a 12
+      // slots opcionales
       { isActive: false, productId: 'slot-08', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
       { isActive: false, productId: 'slot-09', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
       { isActive: false, productId: 'slot-10', productName: 'Producto Desactivado', productDescription: '', startingBid: 0, auctionDurationHours: 1, minIncrement: 1 },
@@ -235,13 +237,12 @@
     window.addEventListener('popstate', (e) => {
       const s = e.state;
       if (s?.view === 'detail' && s.productId) {
-        showDetailView(s.productId); // no pushes
+        showDetailView(s.productId);
       } else {
         showLobbyView();
       }
     });
 
-    // Aplica la ruta inicial (deep-link soporte)
     function applyInitialRoute() {
       const h = location.hash || '';
       if (h.startsWith('#detail/')) {
@@ -259,7 +260,7 @@
         db = getFirestore(app);
         auth = getAuth(app);
 
-        // El botón "Volver" usa history.back() para que coincida con el botón físico
+        // Botón "Volver": usa historial (igual que el botón físico del teléfono)
         backToLobbyBtn.addEventListener('click', () => history.back());
         bidForm.addEventListener('submit', handleBidSubmit);
         quickBidBtn.addEventListener('click', handleQuickBid);
@@ -322,8 +323,7 @@ service cloud.firestore {
           userProfile = userDoc.data();
           renderUserProfile();
           await loadLobby();
-          // Una vez el lobby esté listo, resolvemos la ruta inicial
-          applyInitialRoute();
+          applyInitialRoute(); // resolver ruta inicial
         } else {
           renderProfileInputForm();
         }
@@ -364,8 +364,7 @@ service cloud.firestore {
           <div id="profile-error" class="text-red-600 text-sm mt-2 font-semibold"></div>
         </div>`;
       document.getElementById('profile-form').addEventListener('submit', saveUserProfile);
-      // Quita overlay para que el usuario vea el formulario
-      loadingOverlay.style.display = 'none';
+      loadingOverlay.style.display = 'none'; // mostrar formulario
     }
 
     async function saveUserProfile(e) {
@@ -419,6 +418,11 @@ service cloud.firestore {
         </div>`;
       document.getElementById('logout-btn').addEventListener('click', () => auth.signOut().then(() => window.location.reload()));
       lobbyView.classList.remove('hidden');
+
+      // Estado base para que Atrás no cierre de una
+      if (!history.state) {
+        history.replaceState({ view: 'lobby' }, '', '#lobby');
+      }
     }
 
     // --- VISTAS ---
@@ -529,7 +533,7 @@ service cloud.firestore {
             </div>
           </div>`;
         auctionList.appendChild(card);
-        // Navegación con History API
+        // Navegación con History API (empuja al historial)
         card.addEventListener('click', () => navigateToDetail(auction.id));
         document.getElementById(bidId).textContent = formatBid(auction.currentBid);
         updateCardTimer(timeId, auction.endTime, auction.status);
@@ -564,7 +568,7 @@ service cloud.firestore {
       imageUrls.forEach((url, index) => {
         const thumb = document.createElement('img');
         thumb.src = url;
-        thumb.className = 'thumbnail w-16 h-16 object-cover rounded-md cursor-pointer border-2 border-transparent opacity-60 hover:opacity-100';
+        thumb.className = 'thumbnail w-16 h-16 square rounded-md cursor-pointer border-2 border-transparent opacity-60 hover:opacity-100';
         thumb.onclick = () => showImage(index, imageUrls);
         thumbnailContainer.appendChild(thumb);
       });
@@ -582,6 +586,21 @@ service cloud.firestore {
 
       const thumbnails = document.querySelectorAll('.thumbnail');
       thumbnails.forEach((thumb, i) => thumb.classList.toggle('active', i === index));
+    }
+
+    // --- AVATAR SVG (para historial 1:1) ---
+    function initialAvatarUrl(name = '') {
+      const initials = (name || '?').trim().split(/\s+/).map(p => p[0]?.toUpperCase() || '').slice(0,2).join('') || '?';
+      // Colores base
+      const colors = ['#4f46e5','#0ea5e9','#22c55e','#f59e0b','#ef4444','#14b8a6'];
+      const color = colors[(initials.charCodeAt(0) + (initials.charCodeAt(1)||0)) % colors.length];
+      const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'>
+          <rect width='100%' height='100%' fill='${color}'/>
+          <text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle'
+                font-family='Inter, Arial, sans-serif' font-size='36' fill='#ffffff' font-weight='700'>${initials}</text>
+        </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
 
     // --- DETALLE / BIDS ---
@@ -717,20 +736,46 @@ service cloud.firestore {
       }
     }
 
+    // Historial con imagen 1:1 (avatar por iniciales)
     function renderBidHistory(bids) {
       bidHistoryEl.innerHTML = '<ul class="space-y-2"></ul>';
       if (!bids || bids.length === 0) {
         bidHistoryEl.innerHTML = '<li class="text-gray-500 text-center">Aún no hay ofertas.</li>';
         return;
       }
+      const list = document.createElement('ul');
+      list.className = 'space-y-2';
+
       const sortedBids = [...bids].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       sortedBids.forEach(bid => {
-        const li = document.createElement('li');
         const isCurrentUser = currentUser && bid.uid === currentUser.uid;
-        li.className = `flex justify-between items-center p-2 rounded-md ${isCurrentUser ? 'bg-blue-100' : 'bg-gray-100'}`;
-        li.innerHTML = `<span class="font-semibold text-sm truncate">${bid.nickname}</span><span class="font-bold text-gray-800">$${bid.amount.toLocaleString()}</span>`;
-        bidHistoryEl.querySelector('ul').appendChild(li);
+        const li = document.createElement('li');
+        li.className = `flex items-center justify-between p-2 rounded-md ${isCurrentUser ? 'bg-blue-100' : 'bg-gray-100'}`;
+
+        const left = document.createElement('div');
+        left.className = 'flex items-center gap-3';
+        const img = document.createElement('img');
+        img.src = initialAvatarUrl(bid.nickname || 'U');
+        img.alt = bid.nickname || 'Usuario';
+        img.className = 'w-10 h-10 square rounded-md flex-shrink-0';
+        const name = document.createElement('span');
+        name.className = 'font-semibold text-sm truncate max-w-[10rem]';
+        name.textContent = bid.nickname;
+
+        left.appendChild(img);
+        left.appendChild(name);
+
+        const amount = document.createElement('span');
+        amount.className = 'font-bold text-gray-800';
+        amount.textContent = `$${bid.amount.toLocaleString()}`;
+
+        li.appendChild(left);
+        li.appendChild(amount);
+        list.appendChild(li);
       });
+
+      bidHistoryEl.innerHTML = '';
+      bidHistoryEl.appendChild(list);
     }
 
     function handleAuctionStatus(data) {
