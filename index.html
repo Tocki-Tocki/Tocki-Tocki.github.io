@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RifaOP - Gran Rifa</title>
+    
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <style>
+        /* Estilos Generales Inspirados en Material Design 3 */
+        :root {
+            --md-sys-color-primary: #6750A4;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #EADDFF;
+            --md-sys-color-on-primary-container: #21005D;
+            --md-sys-color-surface: #FFFBFE;
+            --md-sys-color-on-surface: #1C1B1F;
+            --md-sys-color-surface-variant: #E7E0EC;
+            --md-sys-color-on-surface-variant: #49454F;
+            --md-sys-color-outline: #79747E;
+            
+            /* Colores de estado para la rifa */
+            --raffle-color-available: #FFFFFF;
+            --raffle-color-pending: #FFECB3; /* Amarillo */
+            --raffle-color-sold: #C8E6C9; /* Verde */
+            --raffle-text-pending: #6D4C41;
+            --raffle-text-sold: #1B5E20;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--md-sys-color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 32px;
+        }
+
+        /* Tabla de la Rifa */
+        .raffle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .raffle-number {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 500;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            user-select: none;
+            border: 1px solid var(--md-sys-color-outline);
+        }
+
+        /* Estados de los números */
+        .raffle-number.available {
+            background-color: var(--raffle-color-available);
+            cursor: pointer;
+        }
+        .raffle-number.available:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .raffle-number.pending {
+            background-color: var(--raffle-color-pending);
+            color: var(--raffle-text-pending);
+            cursor: not-allowed;
+            border-color: #FFC107;
+        }
+        .raffle-number.sold {
+            background-color: var(--raffle-color-sold);
+            color: var(--raffle-text-sold);
+            cursor: not-allowed;
+            border-color: #4CAF50;
+        }
+
+        /* Ventana de Compra (Modal/Dialog) */
+        dialog {
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 400px;
+        }
+        dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        dialog h2 {
+            margin-top: 0;
+            color: var(--md-sys-color-on-surface);
+        }
+        dialog form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        dialog .form-field {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        dialog label {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--md-sys-color-primary);
+        }
+        dialog input {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--md-sys-color-outline);
+            font-size: 1rem;
+        }
+        dialog input:focus {
+            outline: 2px solid var(--md-sys-color-primary);
+        }
+        dialog .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        dialog button {
+            padding: 10px 24px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        dialog button[type="submit"] {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        dialog button[type="submit"]:hover {
+            opacity: 0.9;
+        }
+        dialog button#cancel-button {
+            background-color: transparent;
+            color: var(--md-sys-color-primary);
+            border: 1px solid var(--md-sys-color-outline);
+        }
+        dialog button#cancel-button:hover {
+            background-color: var(--md-sys-color-primary-container);
+        }
+
+        /* Indicador de Carga */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span class="material-symbols-outlined">confirmation_number</span>
+            RifaOP
+        </h1>
+        <p>¡Selecciona tu número de la suerte y participa!</p>
+
+        <div id="raffle-grid" class="raffle-grid">
+            <div class="loader">Verificando rifa...</div>
+        </div>
+        
+        <div id="legend">
+            <p><strong>Leyenda:</strong> ⬜ Disponible, 🟨 En espera, 🟩 Comprado</p>
+        </div>
+    </div>
+
+    <dialog id="purchase-dialog">
+        <h2>Comprar Número <span id="selected-number-span"></span></h2>
+        <p>Por favor, ingresa tus datos para reservar el número.</p>
+        <form id="purchase-form">
+            <div class="form-field">
+                <label for="name">Nombre Completo</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-field">
+                <label for="phone">Número de Teléfono</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="actions">
+                <button type="button" id="cancel-button">Cancelar</button>
+                <button type="submit">Comprar y Contactar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Firebase -->
+    <script type="module">
+        // Importa las funciones que necesitas
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        
+        // La configuración de tu app web de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCrF4BjP4t00rQQDEu-JOXL3rf7LVMf2O4",
+            authDomain: "rifaop-82154.firebaseapp.com",
+            projectId: "rifaop-82154",
+            storageBucket: "rifaop-82154.appspot.com",
+            messagingSenderId: "1014908719564",
+            appId: "1:1014908719564:web:2d512c7a53f07542f34d69",
+            measurementId: "G-QWE0MXYPQT"
+        };
+
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- CONFIGURACIÓN DE LA RIFA ---
+        const RAFFLE_ID = 'rifaPrincipal'; // Un ID para esta rifa en la base de datos
+        const WHATSAPP_NUMBER = '573180739709'; // Número para contacto, sin el '+'
+        const DEFAULT_NUMBERS = 100; // Cantidad de números a crear si la rifa no existe
+
+        // --- ELEMENTOS DEL DOM ---
+        const raffleGrid = document.getElementById('raffle-grid');
+        const purchaseDialog = document.getElementById('purchase-dialog');
+        const purchaseForm = document.getElementById('purchase-form');
+        const cancelButton = document.getElementById('cancel-button');
+        const selectedNumberSpan = document.getElementById('selected-number-span');
+        
+        let selectedNumber = null;
+
+        // --- LÓGICA PRINCIPAL ---
+
+        /**
+         * Genera la cuadrícula de números en el HTML.
+         * @param {number} totalNumbers - La cantidad total de números a mostrar.
+         */
+        function generateGrid(totalNumbers) {
+            raffleGrid.innerHTML = ''; // Limpia el loader
+            for (let i = 1; i <= totalNumbers; i++) {
+                const numberDiv = document.createElement('div');
+                numberDiv.classList.add('raffle-number', 'available');
+                numberDiv.textContent = i;
+                numberDiv.dataset.number = i;
+                raffleGrid.appendChild(numberDiv);
+            }
+        }
+        
+        /**
+         * Crea una nueva rifa en la base de datos con un número específico de boletos.
+         * @param {number} count - El número de boletos a crear.
+         */
+        async function initializeRaffle(count) {
+            console.log(`Inicializando nueva rifa con ${count} números...`);
+            raffleGrid.innerHTML = `<div class="loader">Creando rifa por primera vez...</div>`;
+            const batch = writeBatch(db);
+
+            // 1. Crea el documento principal de la rifa con la metadata
+            const raffleDocRef = doc(db, 'rifas', RAFFLE_ID);
+            batch.set(raffleDocRef, { totalNumbers: count, createdAt: new Date() });
+
+            // 2. Crea cada uno de los documentos para los números
+            for (let i = 1; i <= count; i++) {
+                const numberDocRef = doc(db, 'rifas', RAFFLE_ID, 'numeros', String(i));
+                batch.set(numberDocRef, { status: 'available' });
+            }
+
+            // 3. Ejecuta todas las operaciones en una sola transacción
+            await batch.commit();
+            console.log("¡Rifa inicializada exitosamente!");
+        }
+
+        /**
+         * Escucha cambios en los números de la rifa en tiempo real y actualiza la UI.
+         */
+        function listenToRaffleData() {
+            const numbersColRef = collection(db, 'rifas', RAFFLE_ID, 'numeros');
+            
+            onSnapshot(numbersColRef, (snapshot) => {
+                const seenNumbers = new Set();
+                snapshot.docs.forEach((docSnap) => {
+                    const numberId = docSnap.id;
+                    const numberData = docSnap.data();
+                    const numberDiv = document.querySelector(`.raffle-number[data-number='${numberId}']`);
+                    
+                    seenNumbers.add(numberId);
+
+                    if (numberDiv) {
+                        numberDiv.classList.remove('available', 'pending', 'sold');
+                        if (numberData.status) {
+                            numberDiv.classList.add(numberData.status);
+                        } else {
+                             numberDiv.classList.add('available');
+                        }
+                    }
+                });
+                
+                const allNumberDivs = document.querySelectorAll('.raffle-number');
+                allNumberDivs.forEach(div => {
+                    if (!seenNumbers.has(div.dataset.number)) {
+                         div.classList.remove('pending', 'sold');
+                         div.classList.add('available');
+                    }
+                });
+
+            }, (error) => {
+                console.error("Error en el listener de Firestore: ", error);
+                raffleGrid.innerHTML = `<div class="loader">Error al cargar los datos. Revisa los permisos de la base de datos.</div>`;
+            });
+        }
+
+        // Manejar el clic en un número
+        raffleGrid.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.classList.contains('raffle-number') && target.classList.contains('available')) {
+                selectedNumber = target.dataset.number;
+                selectedNumberSpan.textContent = selectedNumber;
+                purchaseDialog.showModal();
+            }
+        });
+        
+        // Manejar el envío del formulario de compra
+        purchaseForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (!selectedNumber) return;
+
+            const name = purchaseForm.name.value;
+            const phone = purchaseForm.phone.value;
+            
+            const purchaseData = {
+                name: name,
+                phone: phone,
+                status: 'pending',
+                timestamp: new Date()
+            };
+
+            try {
+                const docRef = doc(db, 'rifas', RAFFLE_ID, 'numeros', selectedNumber);
+                await setDoc(docRef, purchaseData);
+
+                const message = encodeURIComponent(`Hola RifaOP, quiero comprar el número ${selectedNumber}. Mis datos son: ${name}, Tel: ${phone}. Por favor, envíame la información de pago.`);
+                const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+                window.open(whatsappUrl, '_blank');
+
+                purchaseDialog.close();
+                purchaseForm.reset();
+                selectedNumber = null;
+
+            } catch (error) {
+                console.error("Error al guardar en Firestore: ", error);
+                alert("Hubo un error al procesar tu solicitud. Revisa los permisos de la base de datos.");
+            }
+        });
+        
+        // Botón de cancelar en el diálogo
+        cancelButton.addEventListener('click', () => {
+            purchaseDialog.close();
+            purchaseForm.reset();
+            selectedNumber = null;
+        });
+
+        // --- INICIALIZACIÓN ---
+        async function main() {
+            try {
+                await signInAnonymously(auth);
+                console.log("Usuario autenticado anónimamente.");
+
+                // 1. Verifica si el documento principal de la rifa existe
+                const raffleDocRef = doc(db, 'rifas', RAFFLE_ID);
+                const raffleDocSnap = await getDoc(raffleDocRef);
+
+                let totalNumbers;
+                if (raffleDocSnap.exists()) {
+                    // Si existe, usa el total de números guardado
+                    console.log("Rifa encontrada. Cargando datos...");
+                    totalNumbers = raffleDocSnap.data().totalNumbers || DEFAULT_NUMBERS;
+                } else {
+                    // Si no existe, inicializa la rifa con los números por defecto
+                    await initializeRaffle(DEFAULT_NUMBERS);
+                    totalNumbers = DEFAULT_NUMBERS;
+                }
+                
+                // 2. Genera la cuadrícula y empieza a escuchar cambios
+                generateGrid(totalNumbers);
+                listenToRaffleData();
+
+            } catch (error) {
+                console.error("Error durante la inicialización:", error);
+                raffleGrid.innerHTML = `<div class="loader">Ocurrió un error crítico. Revisa la consola para más detalles.</div>`;
+            }
+        }
+
+        main();
+
+    </script>
+</body>
+</html>
+
