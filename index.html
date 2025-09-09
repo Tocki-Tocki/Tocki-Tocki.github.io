@@ -13,7 +13,7 @@
 
     <style>
         :root {
-            --md-sys-color-primary: #6750A4;
+            --md-sys-color-primary: #E53935; /* Rojo Vibrante */
             --md-sys-color-on-primary: #FFFFFF;
             --md-sys-color-surface: #FFFBFE;
             --md-sys-color-on-surface: #1C1B1F;
@@ -22,7 +22,7 @@
             --raffle-color-available: #FFFFFF;
             --raffle-color-pending: #FFECB3; /* Amarillo */
             --raffle-color-sold: #C8E6C9; /* Verde */
-            --raffle-color-loser: #FFCDD2; /* Rojo */
+            --raffle-color-loser: #FFCDD2; /* Rojo Claro */
             --raffle-text-pending: #6D4C41;
             --raffle-text-sold: #1B5E20;
             --raffle-text-loser: #B71C1C;
@@ -48,15 +48,74 @@
             text-align: center;
         }
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--md-sys-color-primary);
+        /* --- ESTILO DE ENCABEZADO RESTAURADO Y AJUSTADO --- */
+        .header-main {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 20px; /* Espacio entre ícono y títulos */
+            margin-bottom: 8px;
+        }
+
+        .main-icon {
+            font-size: 6.5625rem; /* Icono agrandado (105px) */
+            color: var(--md-sys-color-primary);
+        }
+
+        .title-group {
+            text-align: left;
+        }
+
+        .title-group h1 {
+            font-size: 3rem; /* "Gran Rifa" */
+            font-weight: 900;
+            color: var(--md-sys-color-primary);
             text-transform: uppercase;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .prize-subtitle {
+            font-size: 1.6rem; 
+            font-weight: 700; 
+            color: var(--md-sys-color-on-surface);
+            opacity: 0.9;
+            margin: 4px 0 0 0;
+            text-transform: uppercase;
+            word-wrap: break-word; /* Asegura el salto de línea */
+            line-height: 1.2; /* Mejora la legibilidad en multi-línea */
+        }
+
+
+        .raffle-motive {
+            font-size: 1.1rem;
+            color: var(--md-sys-color-on-surface);
+            opacity: 0.8;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        
+        /* --- ESTILO PARA EL PRECIO DE LA BOLETA --- */
+        .raffle-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--md-sys-color-primary);
+            margin: 0 0 16px 0;
+            border: 2px solid var(--md-sys-color-primary);
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 50px;
+            background-color: rgba(229, 57, 53, 0.05);
+        }
+
+        /* --- ESTILO PARA LA LEYENDA --- */
+        #legend {
+            margin-bottom: 24px;
+        }
+        #legend p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
         }
         
         /* --- SECCIÓN DEL GANADOR --- */
@@ -155,7 +214,7 @@
         dialog button[type="submit"] { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
         dialog button[type="submit"]:hover { opacity: 0.9; }
         dialog button#cancel-button { background-color: transparent; color: var(--md-sys-color-primary); border: 1px solid var(--md-sys-color-outline); }
-        dialog button#cancel-button:hover { background-color: var(--md-sys-color-primary-container); }
+        dialog button#cancel-button:hover { background-color: rgba(229, 57, 53, 0.1); } /* Hover rojo claro */
 
         .loader { display: flex; justify-content: center; align-items: center; padding: 40px; }
     </style>
@@ -168,19 +227,27 @@
             <div id="winner-number-display" class="winner-number"></div>
         </div>
 
-        <h1 id="prize-name-heading">
-            <span class="material-symbols-outlined">confirmation_number</span>
-            <span id="prize-name">Cargando Rifa...</span>
-        </h1>
+        <div class="header-main">
+            <span class="material-symbols-outlined main-icon">confirmation_number</span>
+            <div class="title-group">
+                <h1 id="main-title">Gran Rifa</h1>
+                <h2 id="prize-name" class="prize-subtitle">Cargando...</h2>
+            </div>
+        </div>
+        
+        <p id="raffle-motive" class="raffle-motive"></p>
+        <h3 id="raffle-price" class="raffle-price"></h3>
+        
         <p>¡Selecciona tu número de la suerte y participa!</p>
 
+        <div id="legend">
+            <p><strong>Leyenda:</strong> ⬜ Disponible, 🟨 En espera, 🟩 Comprado</p>
+        </div>
+        
         <div id="raffle-grid" class="raffle-grid">
             <div class="loader">Verificando rifa...</div>
         </div>
         
-        <div id="legend">
-            <p><strong>Leyenda:</strong> ⬜ Disponible, 🟨 En espera, 🟩 Comprado</p>
-        </div>
     </div>
 
     <dialog id="purchase-dialog">
@@ -195,14 +262,14 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc, writeBatch, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyCrF4BjP4t00rQQDEu-JOXL3rf7LVMf2O4",
             authDomain: "rifaop-82154.firebaseapp.com",
             projectId: "rifaop-82154",
             storageBucket: "rifaop-82154.appspot.com",
-            messagingSenderId: "1014908719564",
+            messagingSenderId: "101490871954",
             appId: "1:1014908719564:web:2d512c7a53f07542f34d69",
             measurementId: "G-QWE0MXYPQT"
         };
@@ -211,23 +278,31 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- CONFIGURACIÓN ---
         const WHATSAPP_NUMBER = '573180739709';
-        
-        // --- NUEVA ESTRUCTURA DE DATOS ---
-        const RAFFLE_CONFIG_DOC_ID = 'config'; // ID del documento con los datos de la rifa
+        const RAFFLE_CONFIG_DOC_ID = 'config';
+        const RESERVATION_TIMEOUT = 60000; // 1 minuto para pruebas
 
-        // --- ELEMENTOS DEL DOM ---
         const raffleGrid = document.getElementById('raffle-grid');
-        const prizeNameSpan = document.getElementById('prize-name');
+        const prizeNameElement = document.getElementById('prize-name');
+        const raffleMotiveP = document.getElementById('raffle-motive');
+        const rafflePriceElement = document.getElementById('raffle-price');
         const winnerAnnouncementDiv = document.getElementById('winner-announcement');
         const winnerNumberDisplay = document.getElementById('winner-number-display');
         const purchaseDialog = document.getElementById('purchase-dialog');
         const purchaseForm = document.getElementById('purchase-form');
         const cancelButton = document.getElementById('cancel-button');
         const selectedNumberSpan = document.getElementById('selected-number-span');
+        const mainTitleElement = document.getElementById('main-title');
         
         let selectedNumber = null;
+        const activeReservationTimeouts = {};
+
+        function adjustPrizeSubtitleWidth() {
+            if (mainTitleElement && prizeNameElement) {
+                const titleWidth = mainTitleElement.getBoundingClientRect().width;
+                prizeNameElement.style.width = `${Math.ceil(titleWidth)}px`;
+            }
+        }
         
         function generateGrid(totalNumbers) {
             raffleGrid.innerHTML = '';
@@ -246,7 +321,13 @@
             const batch = writeBatch(db);
 
             const raffleConfigRef = doc(db, 'datosRifa', RAFFLE_CONFIG_DOC_ID);
-            batch.set(raffleConfigRef, { totalNumeros: count, nombrePremio: prize, createdAt: new Date() });
+            batch.set(raffleConfigRef, { 
+                totalNumeros: count, 
+                nombrePremio: prize,
+                motivoRifa: "Fondos recaudados para la compra de una silla de barbería.",
+                precioBoleta: 5000, // Precio por defecto
+                createdAt: new Date() 
+            });
 
             for (let i = 1; i <= count; i++) {
                 const numberDocRef = doc(db, 'numeros', String(i));
@@ -257,22 +338,87 @@
             console.log("¡Rifa inicializada exitosamente!");
         }
 
-        function listenToNumbers() {
-            onSnapshot(collection(db, 'numeros'), (snapshot) => {
+        async function selectAndSetWinner(totalNumbers) {
+            const winnerNumber = Math.floor(Math.random() * totalNumbers) + 1;
+            console.log(`El número ganador seleccionado es: ${winnerNumber}`);
+            const raffleConfigRef = doc(db, 'datosRifa', RAFFLE_CONFIG_DOC_ID);
+            try {
+                await setDoc(raffleConfigRef, { numeroGanador: winnerNumber }, { merge: true });
+                console.log("Ganador guardado en la base de datos.");
+            } catch (error) {
+                console.error("Error al guardar el ganador:", error);
+            }
+        }
+
+        async function releaseNumberIfReserved(numberToRelease) {
+            if (!numberToRelease) return;
+            const docRef = doc(db, 'numeros', numberToRelease);
+            try {
+                const currentDoc = await getDoc(docRef);
+                if (currentDoc.exists() && currentDoc.data().status === 'pending' && currentDoc.data().reservedAt) {
+                    await setDoc(docRef, { status: 'available', reservedAt: deleteField() }, { merge: true });
+                    console.log(`Número ${numberToRelease} liberado por expiración.`);
+                }
+            } catch (error) {
+                console.error(`Error al liberar el número ${numberToRelease}:`, error);
+            }
+        }
+
+        function listenToNumbers(totalConfiguredNumbers) {
+            onSnapshot(collection(db, 'numeros'), async (snapshot) => {
+                let soldCount = 0;
+
                 snapshot.docs.forEach((docSnap) => {
                     const numberId = docSnap.id;
                     const numberData = docSnap.data();
                     const numberDiv = document.querySelector(`.raffle-number[data-number='${numberId}']`);
 
+                    if (activeReservationTimeouts[numberId]) {
+                        clearTimeout(activeReservationTimeouts[numberId]);
+                        delete activeReservationTimeouts[numberId];
+                    }
+
                     if (numberDiv) {
-                        numberDiv.classList.remove('available', 'pending', 'sold');
-                        if (numberData.status) {
-                            numberDiv.classList.add(numberData.status);
+                        numberDiv.className = 'raffle-number';
+                        numberDiv.classList.add(numberData.status || 'available');
+                    }
+                    if (numberData.status === 'sold') {
+                        soldCount++;
+                    }
+
+                    if (numberData.status === 'pending' && numberData.reservedAt) {
+                        const reservedTime = numberData.reservedAt.toDate().getTime();
+                        const elapsedTime = Date.now() - reservedTime;
+
+                        const handleExpiration = (numId) => {
+                            releaseNumberIfReserved(numId);
+                            if (purchaseDialog.open && selectedNumber === numId) {
+                                console.log(`Cerrando diálogo para el número expirado: ${numId}`);
+                                purchaseDialog.close();
+                            }
+                        };
+
+                        if (elapsedTime >= RESERVATION_TIMEOUT) {
+                            handleExpiration(numberId);
                         } else {
-                            numberDiv.classList.add('available');
+                            const remainingTime = RESERVATION_TIMEOUT - elapsedTime;
+                            activeReservationTimeouts[numberId] = setTimeout(() => {
+                                handleExpiration(numberId);
+                            }, remainingTime);
                         }
                     }
                 });
+
+                const allDocsExist = snapshot.size === totalConfiguredNumbers;
+                const allAreSold = soldCount === totalConfiguredNumbers;
+                if (allDocsExist && allAreSold) {
+                    const raffleConfigRef = doc(db, 'datosRifa', RAFFLE_CONFIG_DOC_ID);
+                    const raffleConfigSnap = await getDoc(raffleConfigRef);
+                    if (raffleConfigSnap.exists() && !raffleConfigSnap.data().numeroGanador) {
+                        console.log("¡Condiciones cumplidas! Todos los números vendidos. Seleccionando un ganador...");
+                        await selectAndSetWinner(totalConfiguredNumbers);
+                    }
+                }
             }, (error) => console.error("Error escuchando números: ", error));
         }
 
@@ -290,7 +436,6 @@
             winnerNumberDisplay.textContent = winnerNumber;
             winnerAnnouncementDiv.classList.remove('hidden');
             raffleGrid.classList.add('ended');
-
             const allNumbers = document.querySelectorAll('.raffle-number');
             allNumbers.forEach(numDiv => {
                 if (numDiv.dataset.number == winnerNumber) {
@@ -299,12 +444,19 @@
             });
         }
 
-        raffleGrid.addEventListener('click', (event) => {
+        raffleGrid.addEventListener('click', async (event) => {
             const target = event.target;
             if (target.classList.contains('available') && !raffleGrid.classList.contains('ended')) {
                 selectedNumber = target.dataset.number;
-                selectedNumberSpan.textContent = selectedNumber;
-                purchaseDialog.showModal();
+                try {
+                    const docRef = doc(db, 'numeros', selectedNumber);
+                    await setDoc(docRef, { status: 'pending', reservedAt: serverTimestamp() }, { merge: true });
+                    selectedNumberSpan.textContent = selectedNumber;
+                    purchaseDialog.showModal();
+                } catch (error) {
+                    console.error("Error al intentar reservar el número:", error);
+                    selectedNumber = null;
+                }
             }
         });
         
@@ -316,31 +468,41 @@
                 name: purchaseForm.name.value,
                 phone: purchaseForm.phone.value,
                 status: 'pending',
-                timestamp: new Date()
+                timestamp: new Date(),
+                reservedAt: deleteField() 
             };
 
             try {
                 const docRef = doc(db, 'numeros', selectedNumber);
                 await setDoc(docRef, purchaseData, { merge: true });
 
-                const message = encodeURIComponent(`Hola, quiero comprar el número ${selectedNumber} para la rifa de "${prizeNameSpan.textContent}". Mis datos son: ${purchaseData.name}, Tel: ${purchaseData.phone}.`);
+                const message = encodeURIComponent(`Hola, quiero comprar el número ${selectedNumber} para la rifa de "${prizeNameElement.textContent}". Mis datos son: ${purchaseData.name}, Tel: ${purchaseData.phone}.`);
                 const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
                 window.open(whatsappUrl, '_blank');
-
+                
                 purchaseDialog.close();
-                purchaseForm.reset();
-                selectedNumber = null;
             } catch (error) {
                 console.error("Error al guardar en Firestore: ", error);
+                await releaseNumberIfReserved(selectedNumber);
+                purchaseDialog.close();
             }
         });
         
-        cancelButton.addEventListener('click', () => purchaseDialog.close());
+        cancelButton.addEventListener('click', () => {
+            purchaseDialog.close();
+        });
+
+        purchaseDialog.addEventListener('close', async () => {
+            if (selectedNumber) {
+                await releaseNumberIfReserved(selectedNumber);
+            }
+            purchaseForm.reset();
+            selectedNumber = null;
+        });
 
         async function main() {
             try {
                 await signInAnonymously(auth);
-                
                 const raffleConfigRef = doc(db, 'datosRifa', RAFFLE_CONFIG_DOC_ID);
                 const raffleConfigSnap = await getDoc(raffleConfigRef);
 
@@ -349,12 +511,29 @@
                 } 
                 
                 const configData = (await getDoc(raffleConfigRef)).data();
-                prizeNameSpan.textContent = configData.nombrePremio;
+                prizeNameElement.textContent = configData.nombrePremio;
+                if(configData.motivoRifa) {
+                    raffleMotiveP.textContent = configData.motivoRifa;
+                }
+                if (configData.precioBoleta) {
+                    const formattedPrice = new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(configData.precioBoleta);
+                    rafflePriceElement.textContent = `Valor Boleta: ${formattedPrice}`;
+                } else {
+                    rafflePriceElement.style.display = 'none';
+                }
+
                 document.title = `Rifa - ${configData.nombrePremio}`;
                 
                 generateGrid(configData.totalNumeros);
-                listenToNumbers();
+                listenToNumbers(configData.totalNumeros);
                 listenToRaffleConfig();
+                
+                adjustPrizeSubtitleWidth();
+                window.addEventListener('resize', adjustPrizeSubtitleWidth);
 
             } catch (error) {
                 console.error("Error durante la inicialización:", error);
