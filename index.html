@@ -100,7 +100,7 @@
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--md-sys-color-primary);
-            margin: 0 0 16px 0;
+            margin: 15px 0; /* Margen superior e inferior aumentado */
             border: 2px solid var(--md-sys-color-primary);
             display: inline-block;
             padding: 8px 24px;
@@ -108,6 +108,15 @@
             background-color: rgba(229, 57, 53, 0.05);
         }
 
+        .raffle-info-text {
+            margin: 0 0 8px 0;
+        }
+
+        .raffle-cta-text {
+            color: var(--md-sys-color-primary);
+            opacity: 0.8; /* Rojo más suave */
+        }
+        
         /* --- ESTILO PARA LA LEYENDA --- */
         #legend {
             margin-bottom: 24px;
@@ -261,7 +270,8 @@
         <p id="raffle-motive" class="raffle-motive"></p>
         <h3 id="raffle-price" class="raffle-price"></h3>
         
-        <p>¡Selecciona tu número de la suerte y participa!</p>
+        <p class="raffle-info-text">El número ganador se revelará automáticamente una vez que todas las boletas hayan sido vendidas.</p>
+        <p class="raffle-cta-text">¡Selecciona tu número de la suerte y participa!</p>
 
         <div id="legend">
             <p><strong>Leyenda:</strong> ⬜ Disponible, 🟨 En espera, 🟩 Comprado</p>
