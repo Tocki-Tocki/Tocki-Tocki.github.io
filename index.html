@@ -82,8 +82,8 @@
             opacity: 0.9;
             margin: 4px 0 0 0;
             text-transform: uppercase;
-            word-wrap: break-word; /* Asegura el salto de línea */
-            line-height: 1.2; /* Mejora la legibilidad en multi-línea */
+            white-space: nowrap; /* No salta de línea en pantallas grandes */
+            line-height: 1.2; 
         }
 
 
@@ -237,6 +237,7 @@
             }
             .prize-subtitle {
                 font-size: 1.3rem; /* Reducido */
+                white-space: normal; /* Permite salto de línea en móviles */
             }
             #winner-announcement .winner-number {
                 font-size: 4rem; /* Reducido */
@@ -325,17 +326,9 @@
         const purchaseForm = document.getElementById('purchase-form');
         const cancelButton = document.getElementById('cancel-button');
         const selectedNumberSpan = document.getElementById('selected-number-span');
-        const mainTitleElement = document.getElementById('main-title');
         
         let selectedNumber = null;
         const activeReservationTimeouts = {};
-
-        function adjustPrizeSubtitleWidth() {
-            if (mainTitleElement && prizeNameElement) {
-                const titleWidth = mainTitleElement.getBoundingClientRect().width;
-                prizeNameElement.style.width = `${Math.ceil(titleWidth)}px`;
-            }
-        }
         
         function generateGrid(totalNumbers) {
             raffleGrid.innerHTML = '';
@@ -565,9 +558,6 @@
                 listenToNumbers(configData.totalNumeros);
                 listenToRaffleConfig();
                 
-                adjustPrizeSubtitleWidth();
-                window.addEventListener('resize', adjustPrizeSubtitleWidth);
-
             } catch (error) {
                 console.error("Error durante la inicialización:", error);
                 raffleGrid.innerHTML = `<div class="loader">Ocurrió un error crítico.</div>`;
