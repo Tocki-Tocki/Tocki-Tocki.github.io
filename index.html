@@ -217,6 +217,29 @@
         dialog button#cancel-button:hover { background-color: rgba(229, 57, 53, 0.1); } /* Hover rojo claro */
 
         .loader { display: flex; justify-content: center; align-items: center; padding: 40px; }
+
+        /* --- ESTILOS RESPONSIVOS PARA MÓVILES --- */
+        @media (max-width: 600px) {
+            .main-icon {
+                font-size: 4.5rem; /* Reducido para móviles */
+            }
+            .title-group h1 {
+                font-size: 2.2rem; /* Reducido */
+            }
+            .prize-subtitle {
+                font-size: 1.3rem; /* Reducido */
+            }
+            #winner-announcement .winner-number {
+                font-size: 4rem; /* Reducido */
+            }
+            body {
+                padding: 16px;
+            }
+            .raffle-grid {
+                 gap: 8px;
+            }
+        }
+
     </style>
 </head>
 <body>
